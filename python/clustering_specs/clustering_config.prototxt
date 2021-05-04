@@ -1,0 +1,52 @@
+linewidth: 4
+classwise_clustering_config{
+    key: "person"
+    value: {
+        coverage_threshold: 0.005
+        minimum_bounding_box_height: 4
+        dbscan_config{
+            dbscan_eps: 0.3
+            dbscan_min_samples: 0.05
+            dbscan_confidence_threshold: 0.9
+        }
+        bbox_color{
+            R: 0
+            G: 255
+            B: 0
+        }
+    }
+}
+classwise_clustering_config{
+    key: "bag"
+    value: {
+        coverage_threshold: 0.005
+        minimum_bounding_box_height: 4
+        dbscan_config{
+            dbscan_eps: 0.3
+            dbscan_min_samples: 0.05
+            dbscan_confidence_threshold: 0.9
+        }
+        bbox_color{
+            R: 0
+            G: 255
+            B: 255
+        }
+    }
+}
+classwise_clustering_config{
+    key: "face"
+    value: {
+        coverage_threshold: 0.005
+        minimum_bounding_box_height: 4
+        dbscan_config{
+            dbscan_eps: 0.3
+            dbscan_min_samples: 0.05
+            dbscan_confidence_threshold: 0.2
+        }
+        bbox_color{
+            R: 255
+            G: 0
+            B: 0
+        }
+    }
+}
