@@ -20,10 +20,22 @@ from tritonclient.utils import triton_to_np_dtype
 
 from tlt_triton.python.types import Frame, UserData
 from tlt_triton.python.postprocessing.detectnet_processor import DetectNetPostprocessor
+from tlt_triton.python.postprocessing.classification_postprocessor import ClassificationPostprocessor
 from tlt_triton.python.utils.kitti import write_kitti_annotation
+from tlt_triton.python.model.detectnet_model import DetectnetModel
+from tlt_triton.python.model.classification_model import ClassificationModel
 
-FLAGS = None
 logger = logging.getLogger(__name__)
+
+TRITON_MODEL_DICT = {
+    "classification": ClassificationModel,
+    "detectnet_v2": DetectnetModel
+}
+
+POSTPROCESSOR_DICT = {
+    "classification": ClassificationPostprocessor,
+    "detectnet_v2": DetectNetPostprocessor
+}
 
 
 def completion_callback(user_data, result, error):
@@ -31,95 +43,16 @@ def completion_callback(user_data, result, error):
     user_data._completed_requests.put((result, error))
 
 
-def parse_model(model_metadata, model_config):
-    """
-    Check the configuration of a model to make sure it meets the
-    requirements for an image classification network (as expected by
-    this client)
-    """
-    if len(model_metadata.inputs) != 1:
-        raise Exception("expecting 1 input, got {}".format(
-            len(model_metadata.inputs)))
-    # if len(model_metadata.outputs) != 1:
-    #     raise Exception("expecting 1 output, got {}".format(
-    #         len(model_metadata.outputs)))
-    if len(model_metadata.outputs) != 2:
-        raise Exception("expecting 1 output, got {}".format(
-            len(model_metadata.outputs)))
+def convert_http_metadata_config(_metadata, _config):
+    """Convert to the http metadata to class Dict."""
+    _model_metadata = AttrDict(_metadata)
+    _model_config = AttrDict(_config)
 
-    if len(model_config.input) != 1:
-        raise Exception(
-            "expecting 1 input in model configuration, got {}".format(
-                len(model_config.input)))
-
-    if len(model_config.output) != 2:
-        raise Exception(
-            "expecting 2 outputs in model configuration, got {}".format(
-                len(model_config.output)))
-
-    input_metadata = model_metadata.inputs[0]
-    input_config = model_config.input[0]
-    output_metadata = model_metadata.outputs
-
-    for data in output_metadata:
-        if data.datatype != "FP32":
-            raise Exception("expecting output datatype to be FP32, model '" +
-                            data.name + "' output type is " +
-                            data.datatype)
-
-    # Model input must have 3 dims, either CHW or HWC (not counting
-    # the batch dimension), either CHW or HWC
-    input_batch_dim = (model_config.max_batch_size > 0)
-    expected_input_dims = 3 + (1 if input_batch_dim else 0)
-    if len(input_metadata.shape) != expected_input_dims:
-        raise Exception(
-            "expecting input to have {} dimensions, model '{}' input has {}".
-            format(expected_input_dims, model_metadata.name,
-                   len(input_metadata.shape)))
-
-    if type(input_config.format) == str:
-        FORMAT_ENUM_TO_INT = dict(mc.ModelInput.Format.items())
-        input_config.format = FORMAT_ENUM_TO_INT[input_config.format]
-
-    if ((input_config.format != mc.ModelInput.FORMAT_NCHW) and
-        (input_config.format != mc.ModelInput.FORMAT_NHWC)):
-        raise Exception("unexpected input format " +
-                        mc.ModelInput.Format.Name(input_config.format) +
-                        ", expecting " +
-                        mc.ModelInput.Format.Name(mc.ModelInput.FORMAT_NCHW) +
-                        " or " +
-                        mc.ModelInput.Format.Name(mc.ModelInput.FORMAT_NHWC))
-
-    if input_config.format == mc.ModelInput.FORMAT_NHWC:
-        h = input_metadata.shape[1 if input_batch_dim else 0]
-        w = input_metadata.shape[2 if input_batch_dim else 1]
-        c = input_metadata.shape[3 if input_batch_dim else 2]
-    else:
-        c = input_metadata.shape[1 if input_batch_dim else 0]
-        h = input_metadata.shape[2 if input_batch_dim else 1]
-        w = input_metadata.shape[3 if input_batch_dim else 2]
-
-    # This part should be be where the input and output names are returned.
-    return (model_config.max_batch_size, input_metadata.name,
-            [data.name for data in output_metadata], c, h, w, input_config.format,
-            input_metadata.datatype)
+    return _model_metadata, _model_config
 
 
-def preprocess(img, format, dtype, c, h, w, mode, protocol):
-    """
-    Pre-process an image to meet the size, type and format
-    requirements specified by the parameters.
-    """
-    if mode == "DetectNet_v2":
-        image = img / 255.0
-    else:
-        raise NotImplementedError(
-            "Preprocesing method not implemented."
-        )
-    return image
-
-
-def requestGenerator(batched_image_data, input_name, output_name, dtype, FLAGS):
+def requestGenerator(batched_image_data, input_name, output_name, dtype, protocol,
+                     num_classes=0):
     """Generator for triton inference requests.
 
     Args:
@@ -135,8 +68,6 @@ def requestGenerator(batched_image_data, input_name, output_name, dtype, FLAGS):
         made_name (str): Name of the triton model
         model_version (int): Version number
     """
-    protocol = FLAGS.protocol.lower()
-
     if protocol == "grpc":
         client = grpcclient
     else:
@@ -148,19 +79,11 @@ def requestGenerator(batched_image_data, input_name, output_name, dtype, FLAGS):
 
     outputs = [
         client.InferRequestedOutput(
-            out_name, class_count=0
+            out_name, class_count=num_classes
         ) for out_name in output_name
     ]
 
-    yield inputs, outputs, FLAGS.model_name, FLAGS.model_version
-
-
-def convert_http_metadata_config(_metadata, _config):
-    """Convert to the http metadata to class Dict."""
-    _model_metadata = AttrDict(_metadata)
-    _model_config = AttrDict(_config)
-
-    return _model_metadata, _model_config
+    yield inputs, outputs
 
 
 def parse_command_line(args=None):
@@ -202,15 +125,9 @@ def parse_command_line(args=None):
                         required=False,
                         default=1,
                         help='Batch size. Default is 1.')
-    parser.add_argument('-c',
-                        '--classes',
-                        type=int,
-                        required=False,
-                        default=1,
-                        help='Number of class results to report. Default is 1.')
     parser.add_argument('--mode',
                         type=str,
-                        choices=['NONE', "DetectNet_v2"],
+                        choices=['Classification', "DetectNet_v2"],
                         required=False,
                         default='NONE',
                         help='Type of scaling to apply to image pixels. Default is NONE.')
@@ -244,16 +161,15 @@ def parse_command_line(args=None):
                         required=True)
     parser.add_argument("--postprocessing_config",
                         type=str,
-                        default=None,
-                        help="Path to the DetectNet_v2 clustering config.",
-                        required=True)
+                        default="",
+                        help="Path to the DetectNet_v2 clustering config.")
     return parser.parse_args()
 
 
 def main():
     """Running the inferencer client."""
     FLAGS = parse_command_line(sys.argv[1:])
-    if FLAGS.mode == "DetectNet_V2":
+    if FLAGS.mode.lower() == "detectnet_v2":
         assert os.path.isfile(FLAGS.postprocessing_config), (
             "Clustering config must be defined for DetectNet_v2."
         )
@@ -305,16 +221,15 @@ def main():
         model_metadata, model_config = convert_http_metadata_config(
             model_metadata, model_config)
 
-    max_batch_size, input_name, output_name, c, h, w, data_format, dtype = parse_model(
-        model_metadata, model_config)
-
-    target_shape = (c, h, w)
-    npdtype = triton_to_np_dtype(dtype)
+    triton_model = TRITON_MODEL_DICT[FLAGS.mode.lower()].from_metadata(model_metadata, model_config)
+    target_shape = (triton_model.c, triton_model.h, triton_model.w)
+    npdtype = triton_to_np_dtype(triton_model.triton_dtype)
+    max_batch_size = triton_model.max_batch_size
     frames = []
     if os.path.isdir(FLAGS.image_filename):
         frames = [
             Frame(os.path.join(FLAGS.image_filename, f),
-                  data_format,
+                  triton_model.data_format,
                   npdtype,
                   target_shape)
             for f in os.listdir(FLAGS.image_filename)
@@ -324,7 +239,7 @@ def main():
     else:
         frames = [
             Frame(os.path.join(FLAGS.image_filename),
-                  data_format,
+                  triton_model.data_format,
                   npdtype,
                   target_shape)
         ]
@@ -340,11 +255,12 @@ def main():
     last_request = False
     user_data = UserData()
     class_list = FLAGS.class_list.split(",")
-    postprocessor = DetectNetPostprocessor(
-        FLAGS.batch_size, frames, FLAGS.output_path, data_format,
-        class_list, FLAGS.postprocessing_config, target_shape, stride=16
-    )
-    postprocessor.configure()
+    args_postprocessor = [
+        FLAGS.batch_size, frames, FLAGS.output_path, triton_model.data_format
+    ]
+    if FLAGS.mode.lower() == "detectnet_v2":
+        args_postprocessor.extend([class_list, FLAGS.postprocessing_config, target_shape])
+    postprocessor = POSTPROCESSOR_DICT[FLAGS.mode.lower()](*args_postprocessor)
 
     # Holds the handles to the ongoing HTTP async requests.
     async_requests = []
@@ -364,10 +280,8 @@ def main():
                 frame = frames[image_idx]
                 img = frame.load_image()
                 repeated_image_data.append(
-                    preprocess(
-                        frame.as_numpy(img), data_format, dtype,
-                        c, h, w, FLAGS.mode,
-                        FLAGS.protocol.lower()
+                    triton_model.preprocess(
+                        frame.as_numpy(img)
                     )
                 )
                 image_idx = (image_idx + 1) % len(frames)
@@ -381,8 +295,14 @@ def main():
 
             # Send request
             try:
-                for inputs, outputs, model_name, model_version in requestGenerator(
-                        batched_image_data, input_name, output_name, dtype, FLAGS):
+                req_gen_args = [batched_image_data, triton_model.input_names,
+                    triton_model.output_names, triton_model.triton_dtype,
+                    FLAGS.protocol.lower()]
+                req_gen_kwargs = {}
+                if FLAGS.mode.lower() == "classification":
+                    req_gen_kwargs["num_classes"] = model_config.output[0].dims[0]
+                req_generator = requestGenerator(*req_gen_args, **req_gen_kwargs)
+                for inputs, outputs in req_generator:
                     sent_count += 1
                     if FLAGS.streaming:
                         triton_client.async_stream_infer(

@@ -38,8 +38,7 @@ class DetectNetPostprocessor(Postprocessor):
 
     def __init__(self, batch_size, frames,
                  output_path, data_format, classes,
-                 postprocessing_config, target_shape,
-                 stride=16):
+                 postprocessing_config, target_shape):
         """Initialize a post processor class."""
         
         self.pproc_config = load_clustering_config(postprocessing_config)
@@ -47,12 +46,15 @@ class DetectNetPostprocessor(Postprocessor):
         self.output_names = ["output_cov/Sigmoid",
                              "output_bbox/BiasAdd"]
         self.bbox_norm = [35., 35]
-        self.stride = stride
         self.offset = 0.5
         self.scale_h = 1
         self.scale_w = 1
         self.target_shape = target_shape
+        self.stride = self.pproc_config.stride
+        print("stride: {}".format(self.stride))
         super().__init__(batch_size, frames, output_path, data_format)
+        # Format the dbscan elements into classwise configurations for rendering.
+        self.configure()
 
     def configure(self):
         """Configure the post processor object."""
