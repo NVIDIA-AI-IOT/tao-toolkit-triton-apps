@@ -1,0 +1,20 @@
+name: "vehicletypenet_tlt"
+platform: "tensorrt_plan"
+max_batch_size : 1
+input [
+  {
+    name: "input_1"
+    data_type: TYPE_FP32
+    format: FORMAT_NCHW
+    dims: [ 3, 224, 224 ]
+  }
+]
+output [
+  {
+    name: "predictions/Softmax"
+    data_type: TYPE_FP32
+    dims: [6, 1, 1]
+    label_filename: "labels.txt"
+  }
+]
+dynamic_batching { }
