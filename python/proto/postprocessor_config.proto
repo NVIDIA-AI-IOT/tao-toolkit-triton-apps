@@ -33,4 +33,5 @@ message PostprocessingConfig {
     // Post processing config.
     map <string, ClusteringConfig> classwise_clustering_config = 1;
     int32 linewidth = 2;
+    int32 stride = 3;
 }

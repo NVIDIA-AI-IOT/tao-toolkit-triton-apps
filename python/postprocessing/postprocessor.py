@@ -21,4 +21,3 @@ class Postprocessor(object):
     def apply(self, output_tensors, this_id, render=True):
         """Apply the post processor to the outputs."""
         raise NotImplementedError("Base class doesn't implement any post-processing")
-        

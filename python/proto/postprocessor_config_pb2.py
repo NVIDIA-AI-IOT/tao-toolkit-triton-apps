@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='postprocessor_config.proto',
   package='',
   syntax='proto3',
-  serialized_pb=_b('\n\x1apostprocessor_config.proto\"~\n\x0c\x44\x42SCANConfig\x12\x12\n\ndbscan_eps\x18\x01 \x01(\x02\x12\x1a\n\x12\x64\x62scan_min_samples\x18\x02 \x01(\x02\x12\x19\n\x11neighborhood_size\x18\x03 \x01(\x05\x12#\n\x1b\x64\x62scan_confidence_threshold\x18\x04 \x01(\x02\"\xd8\x01\n\x10\x43lusteringConfig\x12\x1a\n\x12\x63overage_threshold\x18\x01 \x01(\x02\x12#\n\x1bminimum_bounding_box_height\x18\x02 \x01(\x05\x12$\n\rdbscan_config\x18\x03 \x01(\x0b\x32\r.DBSCANConfig\x12/\n\nbbox_color\x18\x04 \x01(\x0b\x32\x1b.ClusteringConfig.BboxColor\x1a,\n\tBboxColor\x12\t\n\x01R\x18\x01 \x01(\x05\x12\t\n\x01G\x18\x02 \x01(\x05\x12\t\n\x01\x42\x18\x03 \x01(\x05\"\xd9\x01\n\x14PostprocessingConfig\x12Y\n\x1b\x63lasswise_clustering_config\x18\x01 \x03(\x0b\x32\x34.PostprocessingConfig.ClasswiseClusteringConfigEntry\x12\x11\n\tlinewidth\x18\x02 \x01(\x05\x1aS\n\x1e\x43lasswiseClusteringConfigEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12 \n\x05value\x18\x02 \x01(\x0b\x32\x11.ClusteringConfig:\x02\x38\x01\x62\x06proto3')
+  serialized_pb=_b('\n\x1apostprocessor_config.proto\"~\n\x0c\x44\x42SCANConfig\x12\x12\n\ndbscan_eps\x18\x01 \x01(\x02\x12\x1a\n\x12\x64\x62scan_min_samples\x18\x02 \x01(\x02\x12\x19\n\x11neighborhood_size\x18\x03 \x01(\x05\x12#\n\x1b\x64\x62scan_confidence_threshold\x18\x04 \x01(\x02\"\xd8\x01\n\x10\x43lusteringConfig\x12\x1a\n\x12\x63overage_threshold\x18\x01 \x01(\x02\x12#\n\x1bminimum_bounding_box_height\x18\x02 \x01(\x05\x12$\n\rdbscan_config\x18\x03 \x01(\x0b\x32\r.DBSCANConfig\x12/\n\nbbox_color\x18\x04 \x01(\x0b\x32\x1b.ClusteringConfig.BboxColor\x1a,\n\tBboxColor\x12\t\n\x01R\x18\x01 \x01(\x05\x12\t\n\x01G\x18\x02 \x01(\x05\x12\t\n\x01\x42\x18\x03 \x01(\x05\"\xe9\x01\n\x14PostprocessingConfig\x12Y\n\x1b\x63lasswise_clustering_config\x18\x01 \x03(\x0b\x32\x34.PostprocessingConfig.ClasswiseClusteringConfigEntry\x12\x11\n\tlinewidth\x18\x02 \x01(\x05\x12\x0e\n\x06stride\x18\x03 \x01(\x05\x1aS\n\x1e\x43lasswiseClusteringConfigEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12 \n\x05value\x18\x02 \x01(\x0b\x32\x11.ClusteringConfig:\x02\x38\x01\x62\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -207,8 +207,8 @@ _POSTPROCESSINGCONFIG_CLASSWISECLUSTERINGCONFIGENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=512,
-  serialized_end=595,
+  serialized_start=528,
+  serialized_end=611,
 )
 
 _POSTPROCESSINGCONFIG = _descriptor.Descriptor(
@@ -232,6 +232,13 @@ _POSTPROCESSINGCONFIG = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='stride', full_name='PostprocessingConfig.stride', index=2,
+      number=3, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -245,7 +252,7 @@ _POSTPROCESSINGCONFIG = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=378,
-  serialized_end=595,
+  serialized_end=611,
 )
 
 _CLUSTERINGCONFIG_BBOXCOLOR.containing_type = _CLUSTERINGCONFIG

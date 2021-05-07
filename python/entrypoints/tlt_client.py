@@ -20,10 +20,22 @@ from tritonclient.utils import triton_to_np_dtype
 
 from tlt_triton.python.types import Frame, UserData
 from tlt_triton.python.postprocessing.detectnet_processor import DetectNetPostprocessor
+from tlt_triton.python.postprocessing.classification_postprocessor import ClassificationPostprocessor
 from tlt_triton.python.utils.kitti import write_kitti_annotation
 from tlt_triton.python.model.detectnet_model import DetectnetModel
+from tlt_triton.python.model.classification_model import ClassificationModel
 
 logger = logging.getLogger(__name__)
+
+TRITON_MODEL_DICT = {
+    "classification": ClassificationModel,
+    "detectnet_v2": DetectnetModel
+}
+
+POSTPROCESSOR_DICT = {
+    "classification": ClassificationPostprocessor,
+    "detectnet_v2": DetectNetPostprocessor
+}
 
 
 def completion_callback(user_data, result, error):
@@ -39,7 +51,8 @@ def convert_http_metadata_config(_metadata, _config):
     return _model_metadata, _model_config
 
 
-def requestGenerator(batched_image_data, input_name, output_name, dtype, protocol):
+def requestGenerator(batched_image_data, input_name, output_name, dtype, protocol,
+                     num_classes=0):
     """Generator for triton inference requests.
 
     Args:
@@ -66,7 +79,7 @@ def requestGenerator(batched_image_data, input_name, output_name, dtype, protoco
 
     outputs = [
         client.InferRequestedOutput(
-            out_name, class_count=0
+            out_name, class_count=num_classes
         ) for out_name in output_name
     ]
 
@@ -112,15 +125,9 @@ def parse_command_line(args=None):
                         required=False,
                         default=1,
                         help='Batch size. Default is 1.')
-    parser.add_argument('-c',
-                        '--classes',
-                        type=int,
-                        required=False,
-                        default=1,
-                        help='Number of class results to report. Default is 1.')
     parser.add_argument('--mode',
                         type=str,
-                        choices=['NONE', "DetectNet_v2"],
+                        choices=['Classification', "DetectNet_v2"],
                         required=False,
                         default='NONE',
                         help='Type of scaling to apply to image pixels. Default is NONE.')
@@ -154,16 +161,15 @@ def parse_command_line(args=None):
                         required=True)
     parser.add_argument("--postprocessing_config",
                         type=str,
-                        default=None,
-                        help="Path to the DetectNet_v2 clustering config.",
-                        required=True)
+                        default="",
+                        help="Path to the DetectNet_v2 clustering config.")
     return parser.parse_args()
 
 
 def main():
     """Running the inferencer client."""
     FLAGS = parse_command_line(sys.argv[1:])
-    if FLAGS.mode == "DetectNet_V2":
+    if FLAGS.mode.lower() == "detectnet_v2":
         assert os.path.isfile(FLAGS.postprocessing_config), (
             "Clustering config must be defined for DetectNet_v2."
         )
@@ -215,17 +221,15 @@ def main():
         model_metadata, model_config = convert_http_metadata_config(
             model_metadata, model_config)
 
-    detectnet = DetectnetModel.from_metadata(model_metadata, model_config)
-
-    target_shape = (detectnet.c, detectnet.h, detectnet.w)
-    npdtype = triton_to_np_dtype(detectnet.triton_dtype)
-    max_batch_size = detectnet.max_batch_size
-
+    triton_model = TRITON_MODEL_DICT[FLAGS.mode.lower()].from_metadata(model_metadata, model_config)
+    target_shape = (triton_model.c, triton_model.h, triton_model.w)
+    npdtype = triton_to_np_dtype(triton_model.triton_dtype)
+    max_batch_size = triton_model.max_batch_size
     frames = []
     if os.path.isdir(FLAGS.image_filename):
         frames = [
             Frame(os.path.join(FLAGS.image_filename, f),
-                  detectnet.data_format,
+                  triton_model.data_format,
                   npdtype,
                   target_shape)
             for f in os.listdir(FLAGS.image_filename)
@@ -235,7 +239,7 @@ def main():
     else:
         frames = [
             Frame(os.path.join(FLAGS.image_filename),
-                  detectnet.data_format,
+                  triton_model.data_format,
                   npdtype,
                   target_shape)
         ]
@@ -251,11 +255,12 @@ def main():
     last_request = False
     user_data = UserData()
     class_list = FLAGS.class_list.split(",")
-    postprocessor = DetectNetPostprocessor(
-        FLAGS.batch_size, frames, FLAGS.output_path, detectnet.data_format,
-        class_list, FLAGS.postprocessing_config, target_shape, stride=16
-    )
-    postprocessor.configure()
+    args_postprocessor = [
+        FLAGS.batch_size, frames, FLAGS.output_path, triton_model.data_format
+    ]
+    if FLAGS.mode.lower() == "detectnet_v2":
+        args_postprocessor.extend([class_list, FLAGS.postprocessing_config, target_shape])
+    postprocessor = POSTPROCESSOR_DICT[FLAGS.mode.lower()](*args_postprocessor)
 
     # Holds the handles to the ongoing HTTP async requests.
     async_requests = []
@@ -275,7 +280,7 @@ def main():
                 frame = frames[image_idx]
                 img = frame.load_image()
                 repeated_image_data.append(
-                    detectnet.preprocess(
+                    triton_model.preprocess(
                         frame.as_numpy(img)
                     )
                 )
@@ -290,9 +295,14 @@ def main():
 
             # Send request
             try:
-                for inputs, outputs in requestGenerator(
-                        batched_image_data, detectnet.input_names,
-                        detectnet.output_names, detectnet.triton_dtype, FLAGS):
+                req_gen_args = [batched_image_data, triton_model.input_names,
+                    triton_model.output_names, triton_model.triton_dtype,
+                    FLAGS.protocol.lower()]
+                req_gen_kwargs = {}
+                if FLAGS.mode.lower() == "classification":
+                    req_gen_kwargs["num_classes"] = model_config.output[0].dims[0]
+                req_generator = requestGenerator(*req_gen_args, **req_gen_kwargs)
+                for inputs, outputs in req_generator:
                     sent_count += 1
                     if FLAGS.streaming:
                         triton_client.async_stream_infer(
