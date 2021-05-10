@@ -46,7 +46,7 @@ In order to successfully run the examples defined in this repository, please ins
 | Component  | Version |
 | :---  | :------ |
 | python | 3.6.9 +  |
-| python-pip | 21.06 |
+| python3-pip | 21.06 |
 | nvidia-pyindex| |
 | virtualenvwrapper | |
 
@@ -82,7 +82,17 @@ In order to successfully run the examples defined in this repository, please ins
   the following command.
 
   ```sh
-  pip install -r requirements-pip.txt
+  pip3 install -r requirements-pip.txt
+  ```
+
+3; Install the tritonclient library.
+
+  The NVIDIA TritonClient library is hosted on the nvidia-pyindex repository. You may execute the following commands, to
+  install it.
+
+  ```sh
+  pip3 install nvidia-pyindex
+  pip3 install tritonclient[all]
   ```
 
 3; Add the tlt_triton repository to the PYTHONPATH of the python environment.
