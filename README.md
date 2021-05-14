@@ -162,18 +162,20 @@ wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tlt_vehic
 For peoplenet,
 
 ```sh
+mkdir /model_repository/peoplenet_tlt/1
 tlt-converter ./peoplenet_model/resnet34_peoplenet_pruned.etlt \
               -k tlt_encode \
               -d 3,544,960 \
               -o output_cov/Sigmoid,output_bbox/BiasAdd \
               -t fp32 \
               -m 16 \
-              -e /tlt_model_repository/peoplenet_tlt/1/model.plan
+              -e /model_repository/peoplenet_tlt/1/model.plan
 ```
 
 For dashcamnet,
 
 ```sh
+mkdir /model_repository/dashcamnet_tlt/1
 tlt-converter ./dashcamnet_model/resnet18_dashcamnet_pruned.etlt \
               -k tlt_encode \
               -c ./dashcamnet_model/dashcamnet_int8.txt \
@@ -181,12 +183,13 @@ tlt-converter ./dashcamnet_model/resnet18_dashcamnet_pruned.etlt \
               -o output_cov/Sigmoid,output_bbox/BiasAdd \
               -t int8 \
               -m 16 \
-              -e /tlt_model_repository/dashcamnet_tlt/1/model.plan
+              -e /model_repository/dashcamnet_tlt/1/model.plan
 ```
 
 For VehicleTypeNet
 
 ```sh
+mkdir /model_repository/vehicletypenet_tlt/1
 tlt-converter ./vehicletypenet_model/resnet18_vehicletypenet_pruned.etlt \
               -k tlt_encode \
               -c ./vehicletypenet_model/vehicletypenet_int8.txt  \
@@ -194,13 +197,13 @@ tlt-converter ./vehicletypenet_model/resnet18_vehicletypenet_pruned.etlt \
               -o predictions/Softmax \
               -t int8 \
               -m 16 \
-              -e /model_repository/peoplenet_repository/vehicletypenet_tlt/1/model.plan
+              -e /model_repository/vehicletypenet_tlt/1/model.plan
 ```
 
 5; Instantiate the triton server using these engine files set up in the model repository using the following command.
 
 ```sh
-/opt/tritonserver/bin/tritonserver --model-store /tlt_model_repository
+/opt/tritonserver/bin/tritonserver --model-store /model_repository
 ```
 
 ### Running the client samples
