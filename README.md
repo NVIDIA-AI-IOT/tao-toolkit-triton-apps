@@ -46,13 +46,16 @@ In order to successfully run the examples defined in this repository, please ins
 | Component  | Version |
 | :---  | :------ |
 | python | 3.6.9 +  |
-| python3-pip | 21.06 |
+| python3-pip | >19.03.5 |
+| nvidia-container-toolkit | >1.3.0-1 |
+| nvidia-driver | >455 |
 | nvidia-pyindex| |
 | virtualenvwrapper | |
+| docker-ce | 20.10.6 |
 
 ### Install python dependencies
 
-1; Set up virtualenvwrapper using the following instructions:
+- Set up virtualenvwrapper using the following instructions:
 
   You may follow the instructions in this here to setup a python virtualenv using a virtualenvwrapper.
 
@@ -76,7 +79,7 @@ In order to successfully run the examples defined in this repository, please ins
   workon triton_dev
   ```
 
-2; Install python-pip dependencies
+- Install python-pip dependencies
 
   This repositories relies on several third party python dependancies, which you may install to your virtualenv using
   the following command.
@@ -85,7 +88,7 @@ In order to successfully run the examples defined in this repository, please ins
   pip3 install -r requirements-pip.txt
   ```
 
-3; Install the tritonclient library.
+- Install the tritonclient library.
 
   The NVIDIA TritonClient library is hosted on the nvidia-pyindex repository. You may execute the following commands, to
   install it.
@@ -95,7 +98,7 @@ In order to successfully run the examples defined in this repository, please ins
   pip3 install tritonclient[all]
   ```
 
-3; Add the tlt_triton repository to the PYTHONPATH of the python environment.
+- Add the tlt_triton repository to the PYTHONPATH of the python environment.
 
   For a virtualenv, you may do so by executing the following command.
 
@@ -121,10 +124,10 @@ This sample walks through setting up instances of inferencing the following mode
 2. PeopleNet
 3. VehicleTypeNet
 
-You may generate a valid TensorRT engine, by downloading and installing the `tlt-converter` binaries in the Triton server container
-you wish to serve the models in. Please run these instructions in a separate terminal session.
+You may generate a valid TensorRT engines from TLT exported `.etlt` files, by downloading and installing the `tlt-converter` binary in the Triton server container
+you wish to serve your models in. Please run these instructions in a separate terminal session.
 
-1; Instantiate the triton docker server using the following command.
+- Instantiate the triton server docker using the following command.
 
 ```sh
 docker run --rm -it --net host --gpus 0 --name triton_peoplenet_container \
@@ -132,7 +135,7 @@ docker run --rm -it --net host --gpus 0 --name triton_peoplenet_container \
        -v $REPO_ROOT/model_repository:/model_repository nvcr.io/nvidia/tritonserver:21.03-py3 /bin/bash
 ```
 
-2; Download and install the tlt-converter from this link [here](https://developer.nvidia.com/cuda111-cudnn80-trt72) into the docker using the command below
+- Download and install the tlt-converter from this link [here](https://developer.nvidia.com/cuda111-cudnn80-trt72) into the docker using the command below
 
 ```sh
 wget https://developer.nvidia.com/cuda111-cudnn80-trt72 -P /opt/tlt-converter
@@ -145,7 +148,7 @@ export PATH=/opt/tlt-converter/cuda11.1_cudnn8.0_trt7.2:$PATH
 tlt-converter -h
 ```
 
-3; Download the peoplenet, dashcamnet and vehicletypenet model from NGC
+- Download the peoplenet, dashcamnet and vehicletypenet model from NGC
 
 ```sh
 mkdir tlt_models && cd tlt_models
@@ -157,7 +160,7 @@ wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tlt_vehic
   unzip tlt_vehicletypenet_pruned_v1.0.zip -d vehicletypenet_model/
 ```
 
-4; Generate the TensorRT engine plan file using the tlt-converter
+- Generate the TensorRT engine plan file using the tlt-converter
 
 For peoplenet,
 
@@ -200,11 +203,19 @@ tlt-converter ./vehicletypenet_model/resnet18_vehicletypenet_pruned.etlt \
               -e /model_repository/vehicletypenet_tlt/1/model.plan
 ```
 
-5; Instantiate the triton server using these engine files set up in the model repository using the following command.
+- Instantiate the triton server using these engine files set up in the model repository using the following command.
 
 ```sh
 /opt/tritonserver/bin/tritonserver --model-store /model_repository
 ```
+
+> **NOTE**
+> As a sample to instantiate a Triton Server with these 3 models, the above mentioned steps have been encapsulated into a quick start script that you may invoke using the following command.
+>
+>  ```sh
+>  bash scripts/start_server.sh
+>  ```
+>
 
 ### Running the client samples
 
