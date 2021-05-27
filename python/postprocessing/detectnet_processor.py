@@ -51,7 +51,6 @@ class DetectNetPostprocessor(Postprocessor):
         self.scale_w = 1
         self.target_shape = target_shape
         self.stride = self.pproc_config.stride
-        print("stride: {}".format(self.stride))
         super().__init__(batch_size, frames, output_path, data_format)
         # Format the dbscan elements into classwise configurations for rendering.
         self.configure()
