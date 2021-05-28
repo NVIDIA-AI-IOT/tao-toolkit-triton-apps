@@ -79,7 +79,9 @@ def requestGenerator(batched_image_data, input_name, output_name, dtype, protoco
         input_name (str): Name of the input array
         output_name (list(str)): Name of the model outputs
         dtype: Tensor data type for Triton
-        FLAGS (argparse.ArgumentParser): Parsed command line args
+        protocol (str): The protocol used to communicated between the Triton
+            server and TLT client.
+        num_classes (int): The number of classes in the network.
 
     Yields:
         inputs

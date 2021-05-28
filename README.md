@@ -212,10 +212,16 @@ python tlt_client.py \
        /path/to/a/directory/of/images \
        -m vehicletypenet_tlt \
        -x 1 \
-       -b 8 \
+       -b 1 \
        --mode Classification \
        -i https \
        -u localhost:8000 \
        --async \
        --output_path /path/to/the/output/directory
+```
+
+The output is generated in the `/path/to/the/output/directory/results.txt`, with in the following format.
+
+```text
+/path/to/image.jpg, 1.0000(2)= class_2, 0.0000(0)= class_0, 0.0000(3)= class_3, 0.0000(5)= class_5, 0.0000(4)= class_4, 0.0000(1)= class_1 .. 0.000(N)= class_N
 ```

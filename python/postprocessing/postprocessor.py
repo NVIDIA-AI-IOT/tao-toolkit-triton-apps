@@ -27,8 +27,16 @@ class Postprocessor(object):
     """Class to run post processing of Triton Tensors."""
 
     def __init__(self, batch_size, frames, output_path, data_format):
-        """Initialize a post processor class."""
+        """Initialize a post processor class.
 
+        Args:
+            batch_size (int): Number of images in the batch.
+            frames (list): List of images.
+            output_path (str): Unix path to the output rendered images and labels.
+            data_format (str): Order of the input model dimensions.
+                "channels_first": CHW order.
+                "channels_last": HWC order.        
+        """
         self.batch_size = batch_size
         self.frames = frames
         self.output_path = output_path

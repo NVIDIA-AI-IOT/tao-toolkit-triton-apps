@@ -58,8 +58,19 @@ class DetectNetPostprocessor(Postprocessor):
     def __init__(self, batch_size, frames,
                  output_path, data_format, classes,
                  postprocessing_config, target_shape):
-        """Initialize a post processor class."""
+        """Initialize a post processor class for a classification model.
         
+        Args:
+            batch_size (int): Number of images in the batch.
+            frames (list): List of images.
+            output_path (str): Unix path to the output rendered images and labels.
+            data_format (str): Order of the input model dimensions.
+                "channels_first": CHW order.
+                "channels_last": HWC order.
+            classes (list): List of the class names.
+            postprocessing_config (proto): Configuration elements of the dbscan postprocessor.
+            target_shape (tuple): Shape of the model input.
+        """
         self.pproc_config = load_clustering_config(postprocessing_config)
         self.classes = classes
         self.output_names = ["output_cov/Sigmoid",
@@ -93,7 +104,18 @@ class DetectNetPostprocessor(Postprocessor):
             self.box_color[class_name] = classwise_clustering_config[class_name].bbox_color
 
     def apply(self, results, this_id, render=True):
-        """Apply the post processing to the outputs tensors."""
+        """Apply the post processing to the outputs tensors.
+        
+        This function takes the raw output tensors from the detectnet_v2 model
+        and performs the following steps:
+
+        1. Denormalize the output bbox coordinates
+        2. Threshold the coverage output to get the valid indices for the bboxes.
+        3. Filter out the bboxes from the "output_bbox/BiasAdd" blob.
+        4. Cluster the filterred boxes using DBSCAN.
+        5. Render the outputs on images and save them to the output_path/images
+        6. Serialize the output bboxes to KITTI Format label files in output_path/labels.
+        """
         output_array = {}
         this_id = int(this_id)
         for output_name in self.output_names:

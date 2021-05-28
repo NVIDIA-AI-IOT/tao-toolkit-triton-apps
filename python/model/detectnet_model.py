@@ -19,7 +19,7 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-"""Triton inference client for TLT model."""
+"""Model class for the DetectNet_v2 Triton Model."""
 
 import os
 
@@ -37,7 +37,25 @@ class DetectnetModel(TritonModel):
 
     def __init__(self, max_batch_size, input_names, output_names,
                  channels, height, width, data_format, triton_dtype):
-        """Set up a triton model instance."""
+        """Set up a detectnet_v2 triton model instance.
+        
+        Args:
+            max_batch_size(int): The maximum batch size of the TensorRT engine.
+            input_names (str): List of the input node names
+            output_names (str): List of the output node names
+            channels (int): Number of chanels in the input dimensions
+            height (int): Height of the input
+            width (int): Width of the input
+            data_format (str): The input dimension order. This can be "channels_first"
+                or "channels_last". "channels_first" is in the CHW order,
+                and "channels_last" is in HWC order.
+            triton_dtype (proto): Triton input data type.
+            channel_mode (str): String order of the C dimension of the input.
+                "RGB" or "BGR"
+                
+        Returns:
+            An instance of the DetectnetModel.
+        """
         super().__init__(max_batch_size, input_names, output_names,
                          channels, height, width, data_format,
                          triton_dtype)

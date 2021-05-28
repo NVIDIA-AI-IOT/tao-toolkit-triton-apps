@@ -31,12 +31,21 @@ class ClassificationPostprocessor(Postprocessor):
     """Class to run post processing of Triton Tensors."""
 
     def __init__(self, batch_size, frames, output_path, data_format):
-        """Initialize a post processor class."""
+        """Initialize a post processor class for a classification model.
+        
+        Args:
+            batch_size (int): Number of images in the batch.
+            frames (list): List of images.
+            output_path (str): Unix path to the output rendered images and labels.
+            data_format (str): Order of the input model dimensions.
+                "channels_first": CHW order.
+                "channels_last": HWC order.
+        """
         super().__init__(batch_size, frames, output_path, data_format)
         self.output_name = "predictions/Softmax"
 
     def apply(self, output_tensors, this_id, render=True, batching=True):
-        """Apply the post processor to the outputs."""
+        """Apply the post processor to the outputs to the classification outputs."""
         output_array = output_tensors.as_numpy(self.output_name)
         if len(output_array) != self.batch_size:
             raise Exception("expected {} results, got {}".format(

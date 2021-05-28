@@ -39,8 +39,27 @@ class ClassificationModel(TritonModel):
     """Simple class to run model inference using Triton client."""
 
     def __init__(self, max_batch_size, input_names, output_names,
-                 channels, height, width, data_format, triton_dtype, channel_mode="RGB"):
-        """Set up a triton model instance."""
+                 channels, height, width, data_format,
+                 triton_dtype, channel_mode="RGB"):
+        """Set up a classification triton model instance.
+        
+        Args:
+            max_batch_size(int): The maximum batch size of the TensorRT engine.
+            input_names (str): List of the input node names
+            output_names (str): List of the output node names
+            channels (int): Number of chanels in the input dimensions
+            height (int): Height of the input
+            width (int): Width of the input
+            data_format (str): The input dimension order. This can be "channels_first"
+                or "channels_last". "channels_first" is in the CHW order,
+                and "channels_last" is in HWC order.
+            triton_dtype (proto): Triton input data type.
+            channel_mode (str): String order of the C dimension of the input.
+                "RGB" or "BGR"
+                
+        Returns:
+            An instance of the ClassificationModel.
+        """
         super().__init__(max_batch_size, input_names, output_names,
                          channels, height, width, data_format,
                          triton_dtype)
