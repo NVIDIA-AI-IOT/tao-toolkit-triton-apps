@@ -191,21 +191,41 @@ optional arguments:
 Assuming that a Triton inference server with a valid Detectnet_v2 TensorRT engine has
 been set up, you may run the inference sample by using the following command.
 
-```sh
-python tlt_client.py \
-       /path/to/a/directory/of/images \
-       -m peoplenet_tlt \
-       -x 1 \
-       -b 8 \
-       --mode DetectNet_v2 \
-       -i https \
-       -u localhost:8000 \
-       --async \
-       --output_path /path/to/the/output/directory \
-       --postprocessing_config $tlt_triton_root/python/clustering_specs/clustering_config.prototxt 
-```
+For example,
 
-Similarly, for running an image classification model the command line would be as follows.
+1. For PeopleNet:
+
+  ```sh
+  python tlt_client.py \
+        /path/to/a/directory/of/images \
+        -m peoplenet_tlt \
+        -x 1 \
+        -b 8 \
+        --mode DetectNet_v2 \
+        -i https \
+        -u localhost:8000 \
+        --async \
+        --output_path /path/to/the/output/directory \
+        --postprocessing_config $tlt_triton_root/python/clustering_specs/clustering_config_peoplenet.prototxt 
+  ```
+
+2. For DashCamNet:
+
+  ```sh
+  python tlt_client.py \
+        /path/to/a/directory/of/images \
+        -m dashcamnet_tlt \
+        -x 1 \
+        -b 8 \
+        --mode DetectNet_v2 \
+        -i https \
+        -u localhost:8000 \
+        --async \
+        --output_path /path/to/the/output/directory \
+        --postprocessing_config $tlt_triton_root/python/clustering_specs/clustering_config_dashcamnet.prototxt 
+  ```
+
+Similarly, for running an Image Classification model, the command line would be as follows:
 
 ```sh
 python tlt_client.py \
