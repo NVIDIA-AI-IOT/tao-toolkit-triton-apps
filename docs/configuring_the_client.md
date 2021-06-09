@@ -95,7 +95,7 @@ using TLT, except for dims. You may derive the dimensions of the input and outpu
    >
    >`model_stride=16` for all combinations of backbones with DetectNet_v2, except for a
    > Detectnet_v2 model with `efficientnet_b0` where the `model_stride=32`. For a complete
-   > list of backbone supported refer to the [TLT documentation](https://docs.nvidia.com/metropolis/TLT/tlt-user-guide/text/open_images/overview.html).
+   > list of backbone supported refer to the [TLT documentation](https://docs.nvidia.com/TLT/tlt-user-guide/text/open_images/overview.html).
 
 ### Configuring the Post-processor
 
@@ -188,7 +188,7 @@ The table below expands the configurable parameters defined under the `dbscan_co
 
 > Note:
 >
-> A unique key-value entry has to be defined for every class that the DetectNet_v2 model is trained for. <br>Please refer to the [DetectNet_v2 documentation](https://docs.nvidia.com/metropolis/TLT/tlt-user-guide/text/object_detection/detectnet_v2.html#exporting-the-detectnet-v2-model)
+> A unique key-value entry has to be defined for every class that the DetectNet_v2 model is trained for. <br>Please refer to the [DetectNet_v2 documentation](https://docs.nvidia.com/TLT/tlt-user-guide/text/object_detection/detectnet_v2.html#exporting-the-detectnet-v2-model)
 > for more information on how to derive the class labels from the training configuration file of the network at export.
 
 The post processor configuration in a protobuf file, who's schema is defined in this [file](../python/proto/postprocessor_config.proto).
