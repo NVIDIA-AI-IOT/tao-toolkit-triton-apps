@@ -115,13 +115,13 @@ In order to successfully run the examples defined in this repository, please ins
   For a virtualenv, you may do so by executing the following command.
 
   ```sh
-  add2virtualenv $TLT_TRITON_REPO_ROOT
+  add2virtualenv $TLT_TRITON_REPO_ROOT/tlt_triton
   ```
 
   For native python, please run
 
   ```sh
-  export PYTHONPATH=${TLT_TRITON_REPO_ROOT}:${PYTHONPATH}
+  export PYTHONPATH=${TLT_TRITON_REPO_ROOT}/tlt_triton:${PYTHONPATH}
   ```
 
 ### Instantiate the Triton Server with sample models downloaded from NGC
@@ -144,7 +144,7 @@ Simply run the quick start script:
 
 ### Running the client samples
 
-The Triton client to serve run TLT models is implemented in the `tlt_triton/python/entrypoints/tlt_client.py`.
+The Triton client to serve run TLT models is implemented in the `${TLT_TRITON_REPO_ROOT}/tlt_triton/python/entrypoints/tlt_client.py`.
 This implementation is a reference example run to `detectnet_v2` and `classification`.
 
 The CLI options for this client application are as follows:
@@ -206,7 +206,7 @@ For example,
         -u localhost:8000 \
         --async \
         --output_path /path/to/the/output/directory \
-        --postprocessing_config $tlt_triton_root/python/clustering_specs/clustering_config_peoplenet.prototxt 
+        --postprocessing_config $tlt_triton_root/tlt_triton/python/clustering_specs/clustering_config_peoplenet.prototxt 
   ```
 
 2. For DashCamNet:
@@ -222,7 +222,7 @@ For example,
         -u localhost:8000 \
         --async \
         --output_path /path/to/the/output/directory \
-        --postprocessing_config $tlt_triton_root/python/clustering_specs/clustering_config_dashcamnet.prototxt 
+        --postprocessing_config $tlt_triton_root/tlt_triton/python/clustering_specs/clustering_config_dashcamnet.prototxt 
   ```
 
 Similarly, for running an Image Classification model, the command line would be as follows:

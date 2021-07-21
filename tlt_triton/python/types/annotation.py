@@ -46,7 +46,8 @@ class KittiBbox(BaseAnnotation):
     def __init__(self, category, truncation,
                  occlusion, observation_angle,
                  box, height, width, length,
-                 x, y, z, world_bbox_rot_y):
+                 x, y, z, world_bbox_rot_y,
+                 confidence_score=None):
         """Initialize a kitti annotation object."""
         self.category = category
         self.truncation = float(truncation)
@@ -57,6 +58,7 @@ class KittiBbox(BaseAnnotation):
                   float(x), float(y), float(z)]
         self.world_bbox = hwlxyz[3:6] + hwlxyz[0:3]
         self.world_bbox_rot_y = world_bbox_rot_y
+        self.confidence = confidence_score
         super(KittiBbox, self).__init__()
 
     def __str__(self):
@@ -66,6 +68,11 @@ class KittiBbox(BaseAnnotation):
             *self.world_bbox
         )
         bbox_str = "{:0.3f} {:0.3f} {:0.3f} {:0.3f}".format(*self.box)
+        if self.confidence is not None:
+            return "{0} {1:.2f} {2} {3:0.2f} {4} {5} {6:.2f} {7:0.2f}".format(
+                self.category, self.truncation, self.occlusion, self.observation_angle,
+                bbox_str, world_bbox_str, self.world_bbox_rot_y, self.confidence
+            )
         return "{0} {1:.2f} {2} {3:0.2f} {4} {5} {6:.2f}".format(
             self.category, self.truncation, self.occlusion, self.observation_angle,
             bbox_str, world_bbox_str, self.world_bbox_rot_y

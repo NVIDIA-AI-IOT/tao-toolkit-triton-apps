@@ -75,6 +75,9 @@ docker run -it --rm -v ${tlt_triton_root}/model_repository:/model_repository \
                     -v ${default_model_download_path}:/tlt_models \
                     -v ${tlt_triton_root}/scripts:/tlt_triton \
                     --gpus all \
+                    -u $(id -u):$(id -u) \
+                    -p 8000:8000 \
+                    -p 8001:8001 \
                     -e CUDA_VISIBLE_DEVICES=$gpu_id \
                     ${tlt_triton_server_docker}:${tlt_triton_server_tag} \
                     /tlt_triton/download_and_convert.sh
