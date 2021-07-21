@@ -182,7 +182,7 @@ class DetectNetPostprocessor(Postprocessor):
                             KittiBbox(
                                 self.classes[class_idx], 0, 0, 0,
                                 mean_bbox, 0, 0, 0, 0,
-                                0, 0, 0
+                                0, 0, 0, confidence_score=aggregated_w
                             )
                         )
                     else:
