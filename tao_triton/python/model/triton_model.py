@@ -19,7 +19,7 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-"""Triton inference client for TLT model."""
+"""Triton inference client for TAO Toolkit model."""
 
 from abc import abstractmethod
 import os
@@ -62,7 +62,7 @@ class TritonModel(object):
         self.output_names = output_names
         self.c = channels
         assert channels in [1, 3], (
-            "TLT models only support 1 or 3 channel inputs."
+            "TAO Toolkit models only support 1 or 3 channel inputs."
         )
         self.h = height
         self.w = width
@@ -93,18 +93,6 @@ class TritonModel(object):
             channels, height, width, data_format,
             triton_dtype
         )
-
-    @abstractmethod
-    def preprocess(self, image):
-        """Preprocess an input image.
-
-        Args:
-            image (np.ndarray): Image object to be preprocessed.
-
-        Returns:
-            image (np.ndarray): Preprocessed input image.
-        """
-        raise NotImplementedError("Base class doesn't implement this method.")
 
     def get_config(self):
         """Get dictionary config."""

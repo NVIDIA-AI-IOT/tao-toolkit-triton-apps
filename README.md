@@ -1,22 +1,22 @@
-# TLT Triton Apps
+# TAO Toolkit Triton Apps
 
 - [Quick Start Instructions](#quick-start-instructions)
   - [Pre-requisites](#pre-requisites)
   - [Install python dependencies](#install-python-dependencies)
   - [Instantiate the Triton Server with sample models downloaded from NGC](#instantiate-the-triton-server-with-sample-models-downloaded-from-ngc)
   - [Running the client samples](#running-the-client-samples)
-- [Configuring the TLT client](docs/configuring_the_client.md#configuring-the-client-samples)
+- [Configuring the TAO Toolkit client](docs/configuring_the_client.md#configuring-the-client-samples)
   - [DetectNet_v2](docs/configuring_the_client.md#detectnet-v2)
     - [Configuring the DetectNet_v2 model entry in the model repository](docs/configuring_the_client.md#configuring-the-detectnet-v2-model-entry-in-the-model-repository)
     - [Configuring the Post-processor](docs/configuring_the_client.md#configuring-the-post-processor)
   - [Classification](docs/configuring_the_client.md#classification)
     - [Configuring the Classification model entry in the model repository](docs/configuring_the_client.md#configuring-the-classification-model-entry-in-the-model-repository)
 
-NVIDIA Transfer Learning Toolkit (TLT), provides users an easy interface to generate accurate and optimized models
+NVIDIA Train Adapt Optimize (TAO) Toolkit, provides users an easy interface to generate accurate and optimized models
 for computer vision and conversational AI use cases. These models are generally deployed via the DeepStream SDK or
 Jarvis pipelines.
 
-This repository provides users with reference examples to infer the trained models with TLT in Triton. For this commit,
+This repository provides users with reference examples to infer the trained models with TAO Toolkit in Triton. For this commit,
 we provide reference applications for 2 computer vision models, namely:
 
 - DetectNet_v2
@@ -46,7 +46,7 @@ To understand Triton better, please refer to the official [documentation](https:
 
 ## Quick Start Instructions
 
-Inorder to run the reference TLT Triton client implementations in this TLT, please follow the steps mentioned below:
+Inorder to run the reference TAO Toolkit Triton client implementations in this TAO Toolkit, please follow the steps mentioned below:
 
 ### Pre-requisites
 
@@ -110,24 +110,24 @@ In order to successfully run the examples defined in this repository, please ins
   pip3 install tritonclient[all]
   ```
 
-- Add the tlt_triton repository to the PYTHONPATH of the python environment.
+- Add the tao_triton repository to the PYTHONPATH of the python environment.
 
   For a virtualenv, you may do so by executing the following command.
 
   ```sh
-  add2virtualenv $TLT_TRITON_REPO_ROOT/tlt_triton
+  add2virtualenv $TAO_TRITON_REPO_ROOT/tao_triton
   ```
 
   For native python, please run
 
   ```sh
-  export PYTHONPATH=${TLT_TRITON_REPO_ROOT}/tlt_triton:${PYTHONPATH}
+  export PYTHONPATH=${TAO_TRITON_REPO_ROOT}/tao_triton:${PYTHONPATH}
   ```
 
 ### Instantiate the Triton Server with sample models downloaded from NGC
 
 The Triton model client applications in the repository requires users to set-up a Triton server using a
-TensorRT engine file. When running export, TLT generates a `.etlt` file which is an intermediate format
+TensorRT engine file. When running export, TAO Toolkit generates a `.etlt` file which is an intermediate format
 that can moved across hardware platforms.
 
 This sample walks through setting up instances of inferencing the following models
@@ -144,13 +144,13 @@ Simply run the quick start script:
 
 ### Running the client samples
 
-The Triton client to serve run TLT models is implemented in the `${TLT_TRITON_REPO_ROOT}/tlt_triton/python/entrypoints/tlt_client.py`.
+The Triton client to serve run TAO Toolkit models is implemented in the `${TAO_TRITON_REPO_ROOT}/tao_triton/python/entrypoints/tao_client.py`.
 This implementation is a reference example run to `detectnet_v2` and `classification`.
 
 The CLI options for this client application are as follows:
 
 ```text
-usage: tlt_client.py [-h] [-v] [-a] [--streaming] -m MODEL_NAME
+usage: tao_client.py [-h] [-v] [-a] [--streaming] -m MODEL_NAME
                      [-x MODEL_VERSION] [-b BATCH_SIZE]
                      [--mode {Classification,DetectNet_v2}] [-u URL]
                      [-i PROTOCOL] [--class_list CLASS_LIST] --output_path
@@ -196,9 +196,9 @@ For example,
 1. For PeopleNet:
 
   ```sh
-  python tlt_client.py \
+  python tao_client.py \
         /path/to/a/directory/of/images \
-        -m peoplenet_tlt \
+        -m peoplenet_tao \
         -x 1 \
         -b 8 \
         --mode DetectNet_v2 \
@@ -206,15 +206,15 @@ For example,
         -u localhost:8000 \
         --async \
         --output_path /path/to/the/output/directory \
-        --postprocessing_config $tlt_triton_root/tlt_triton/python/clustering_specs/clustering_config_peoplenet.prototxt 
+        --postprocessing_config $tao_triton_root/tao_triton/python/clustering_specs/clustering_config_peoplenet.prototxt 
   ```
 
 2. For DashCamNet:
 
   ```sh
-  python tlt_client.py \
+  python tao_client.py \
         /path/to/a/directory/of/images \
-        -m dashcamnet_tlt \
+        -m dashcamnet_tao \
         -x 1 \
         -b 8 \
         --mode DetectNet_v2 \
@@ -222,15 +222,15 @@ For example,
         -u localhost:8000 \
         --async \
         --output_path /path/to/the/output/directory \
-        --postprocessing_config $tlt_triton_root/tlt_triton/python/clustering_specs/clustering_config_dashcamnet.prototxt 
+        --postprocessing_config $tao_triton_root/tao_triton/python/clustering_specs/clustering_config_dashcamnet.prototxt 
   ```
 
 Similarly, for running an Image Classification model, the command line would be as follows:
 
 ```sh
-python tlt_client.py \
+python tao_client.py \
        /path/to/a/directory/of/images \
-       -m vehicletypenet_tlt \
+       -m vehicletypenet_tao \
        -x 1 \
        -b 1 \
        --mode Classification \

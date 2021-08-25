@@ -29,8 +29,8 @@ import numpy as np
 from sklearn.cluster import DBSCAN as dbscan
 from PIL import ImageDraw
 
-from tlt_triton.python.types import KittiBbox
-from tlt_triton.python.utils.kitti import write_kitti_annotation
+from tao_triton.python.types import KittiBbox
+from tao_triton.python.utils.kitti import write_kitti_annotation
 import tritonclient.grpc.model_config_pb2 as mc
 
 logger = logging.getLogger(__name__)

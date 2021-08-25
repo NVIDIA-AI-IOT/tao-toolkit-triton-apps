@@ -23,7 +23,7 @@ get_ngc_key_from_environment() {
     # try to get it from there.
     if [ -z "$ngc_key" ] && [[ -f "$HOME/.ngc/config" ]]
     then
-        ngc_key=$(cat $HOME/.ngc/config | grep apikey | awk '{print $3}')
+        ngc_key=$(cat $HOME/.ngc/config | grep apikey -m1 | awk '{print $3}')
     fi
     echo $ngc_key
 }
@@ -56,28 +56,27 @@ if [[ ! -f $config_path ]]; then
 fi
 source $config_path
 
-# Building the Triton docker with the tlt-converter.
-docker build -f "${tlt_triton_root}/docker/Dockerfile" \
-             -t ${tlt_triton_server_docker}:${tlt_triton_server_tag} ${tlt_triton_root}
+# Building the Triton docker with the tao-converter.
+docker build -f "${tao_triton_root}/docker/Dockerfile" \
+             -t ${tao_triton_server_docker}:${tao_triton_server_tag} ${tao_triton_root}
 
 mkdir ${default_model_download_path} && cd ${default_model_download_path}
-wget --content-disposition ${ngc_peoplenet} -O ${default_model_download_path}/tlt_peoplenet_pruned_v2.1.zip && \
-     unzip ${default_model_download_path}/tlt_peoplenet_pruned_v2.1.zip -d ${default_model_download_path}/peoplenet_model/
-wget --content-disposition ${ngc_dashcamnet} -O ${default_model_download_path}/tlt_dashcamnet_pruned_v1.0.zip && \
-     unzip ${default_model_download_path}/tlt_dashcamnet_pruned_v1.0.zip -d ${default_model_download_path}/dashcamnet_model/
-wget --content-disposition ${ngc_vehicletypenet} -O ${default_model_download_path}/tlt_vehicletypenet_pruned_v1.0.zip && \
-     unzip ${default_model_download_path}/tlt_vehicletypenet_pruned_v1.0.zip -d ${default_model_download_path}/vehicletypenet_model/
+wget --content-disposition ${ngc_peoplenet} -O ${default_model_download_path}/peoplenet_pruned_v2.1.zip && \
+     unzip ${default_model_download_path}/peoplenet_pruned_v2.1.zip -d ${default_model_download_path}/peoplenet_model/
+wget --content-disposition ${ngc_dashcamnet} -O ${default_model_download_path}/dashcamnet_pruned_v1.0.zip && \
+     unzip ${default_model_download_path}/dashcamnet_pruned_v1.0.zip -d ${default_model_download_path}/dashcamnet_model/
+wget --content-disposition ${ngc_vehicletypenet} -O ${default_model_download_path}/vehicletypenet_pruned_v1.0.zip && \
+     unzip ${default_model_download_path}/vehicletypenet_pruned_v1.0.zip -d ${default_model_download_path}/vehicletypenet_model/
 rm -rf ${default_model_download_path}/*.zip
 
 # Run the server container.
 echo "Running the server on ${gpu_id}"
-docker run -it --rm -v ${tlt_triton_root}/model_repository:/model_repository \
+docker run -it --rm -v ${tao_triton_root}/model_repository:/model_repository \
                     -v ${default_model_download_path}:/tlt_models \
-                    -v ${tlt_triton_root}/scripts:/tlt_triton \
+                    -v ${tao_triton_root}/scripts:/tao_triton \
                     --gpus all \
-                    -u $(id -u):$(id -u) \
                     -p 8000:8000 \
                     -p 8001:8001 \
                     -e CUDA_VISIBLE_DEVICES=$gpu_id \
-                    ${tlt_triton_server_docker}:${tlt_triton_server_tag} \
-                    /tlt_triton/download_and_convert.sh
+                    ${tao_triton_server_docker}:${tao_triton_server_tag} \
+                    /tao_triton/download_and_convert.sh

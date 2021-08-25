@@ -19,10 +19,9 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-"""Triton inference client for TLT model."""
+"""Model class for the DetectNet_v2 Triton Model."""
 
 import os
-import numpy as np
 
 import tritonclient.grpc as grpcclient
 import tritonclient.grpc.model_config_pb2 as mc
@@ -30,18 +29,15 @@ import tritonclient.http as httpclient
 from tritonclient.utils import InferenceServerException
 from tritonclient.utils import triton_to_np_dtype
 
-from tlt_triton.python.model.triton_model import TritonModel
-
-CHANNEL_MODES = ["rgb", "bgr", "l"]
+from tao_triton.python.model.triton_model import TritonModel
 
 
-class ClassificationModel(TritonModel):
+class DetectnetModel(TritonModel):
     """Simple class to run model inference using Triton client."""
 
     def __init__(self, max_batch_size, input_names, output_names,
-                 channels, height, width, data_format,
-                 triton_dtype, channel_mode="RGB"):
-        """Set up a classification triton model instance.
+                 channels, height, width, data_format, triton_dtype):
+        """Set up a detectnet_v2 triton model instance.
         
         Args:
             max_batch_size(int): The maximum batch size of the TensorRT engine.
@@ -58,33 +54,22 @@ class ClassificationModel(TritonModel):
                 "RGB" or "BGR"
                 
         Returns:
-            An instance of the ClassificationModel.
+            An instance of the DetectnetModel.
         """
         super().__init__(max_batch_size, input_names, output_names,
                          channels, height, width, data_format,
                          triton_dtype)
-        self.scale = 1.0
-        if channels == 1:
-            self.mean = [117.3786]
-        elif channels == 3:
-            self.mean  = [103.939, 116.779, 123.68]
-
-        if channel_mode.lower() == "rgb":
-            # Swap channels to make sure that they are in the
-            # correct channel order.
-            self.mean.reverse()
-        self.mean = np.asarray(self.mean).astype(np.float32)
-        if self.data_format == mc.ModelInput.FORMAT_NCHW:
-            self.mean = self.mean[:, np.newaxis, np.newaxis]
+        self.scale = 1. / 255.0
 
     @staticmethod
     def parse_model(model_metadata, model_config):
-        """Parse model metadata and model config from the triton server."""
+        """Simple class to parse model metadata and model config."""
         if len(model_metadata.inputs) != 1:
             raise Exception("expecting 1 input, got {}".format(
                 len(model_metadata.inputs)))
-        if len(model_metadata.outputs) != 1:
-            raise Exception("expecting 1 output, got {}".format(
+
+        if len(model_metadata.outputs) != 2:
+            raise Exception("expecting 2 output, got {}".format(
                 len(model_metadata.outputs)))
 
         if len(model_config.input) != 1:
@@ -92,28 +77,20 @@ class ClassificationModel(TritonModel):
                 "expecting 1 input in model configuration, got {}".format(
                     len(model_config.input)))
 
+        if len(model_config.output) != 2:
+            raise Exception(
+                "expecting 2 outputs in model configuration, got {}".format(
+                    len(model_config.output)))
+
         input_metadata = model_metadata.inputs[0]
         input_config = model_config.input[0]
-        output_metadata = model_metadata.outputs[0]
+        output_metadata = model_metadata.outputs
 
-        if output_metadata.datatype != "FP32":
-            raise Exception("expecting output datatype to be FP32, model '" +
-                            model_metadata.name + "' output type is " +
-                            output_metadata.datatype)
-
-        # Output is expected to be a vector. But allow any number of
-        # dimensions as long as all but 1 is size 1 (e.g. { 10 }, { 1, 10
-        # }, { 10, 1, 1 } are all ok). Ignore the batch dimension if there
-        # is one.
-        output_batch_dim = (model_config.max_batch_size > 0)
-        non_one_cnt = 0
-        for dim in output_metadata.shape:
-            if output_batch_dim:
-                output_batch_dim = False
-            elif dim > 1:
-                non_one_cnt += 1
-                if non_one_cnt > 1:
-                    raise Exception("expecting model output to be a vector")
+        for data in output_metadata:
+            if data.datatype != "FP32":
+                raise Exception("expecting output datatype to be FP32, model '" +
+                                data.name + "' output type is " +
+                                data.datatype)
 
         # Model input must have 3 dims, either CHW or HWC (not counting
         # the batch dimension), either CHW or HWC
@@ -147,10 +124,7 @@ class ClassificationModel(TritonModel):
             h = input_metadata.shape[2 if input_batch_dim else 1]
             w = input_metadata.shape[3 if input_batch_dim else 2]
 
-        print(model_config.max_batch_size, input_metadata.name,
-                output_metadata.name, c, h, w, input_config.format,
-                input_metadata.datatype)
-
+        # This part should be be where the input and output names are returned.
         return (model_config.max_batch_size, input_metadata.name,
-                [output_metadata.name], c, h, w, input_config.format,
+                [data.name for data in output_metadata], c, h, w, input_config.format,
                 input_metadata.datatype)
