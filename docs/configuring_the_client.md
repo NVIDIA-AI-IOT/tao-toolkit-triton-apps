@@ -25,7 +25,7 @@ A sample model repository for a DetectNet_v2 PeopleNet model would have the foll
 
 ```text
 model_repository_root/
-    peoplenet_tlt/
+    peoplenet_tao/
         config.pbtxt
         1/
             model.plan
@@ -35,7 +35,7 @@ The `config.pbtxt` file, describes the model configuration for the model. A samp
 model would look like this.
 
 ```proto
-name: "peoplenet_tlt"
+name: "peoplenet_tao"
 platform: "tensorrt_plan"
 max_batch_size: 16
 input [
@@ -65,9 +65,9 @@ The following table explains the parameters in the config.pbtxt
 
 | **Parameter Name** | **Description** | **Type**  | **Supported Values**| **Sample Values**|
 | :----              | :-------------- | :-------: | :------------------ | :--------------- |
-| name | The user readable name of the served model | string |   | peoplenet_tlt|
+| name | The user readable name of the served model | string |   | peoplenet_tao|
 | platform | The backend used to parse and run the model | string | tensorrt_plan | tensorrt_plan |
-| max_batch_size | The maximum batch size used to create the TensorRT engine.<br>This should be the same as the `max_batch_size` parameter of the `tlt-converter`| int |  | 16 |
+| max_batch_size | The maximum batch size used to create the TensorRT engine.<br>This should be the same as the `max_batch_size` parameter of the `tao-converter`| int |  | 16 |
 | input | Configuration elements for the input nodes | list of protos/node |  |  |
 | output | Configuration elements for the output nodes | list of protos/node |  |  |
 | dynamic_batching | Configuration element to enable [dynamic batching](https://github.com/triton-inference-server/server/blob/main/docs/model_configuration.md#dynamic-batcher) using Triton | proto element |  |  |
@@ -79,10 +79,10 @@ that is being served. As seen in the sample, a detectnet_v2 model has 1 input no
 - `output_cov/Sigmoid`
 
 All the parameters defined the `input` and `output` elements remain the same for any DetectNet_v2 model trained
-using TLT, except for dims. You may derive the dimensions of the input and output nodes as follows:
+using TAO Toolkit, except for dims. You may derive the dimensions of the input and output nodes as follows:
 
 1. For `input_1`, the parameter `dims` is the input dimensions of the model in C, H, W order (where C = Channels, H = height, W = Width).
-   This parameter should be indentical to the dimension mentioned to `-d` option of the `tlt-converter`.
+   This parameter should be indentical to the dimension mentioned to `-d` option of the `tao-converter`.
 
 2. For `output_cov/Sigmoid`, the parameter `dims` is the output dimension of the coverage blob in C, H, W order. The value for the dimensions can
    be calculated as C = num_classes, H = ceil(input_h/model_stride) , W = ceil(input_w/model_stride)
@@ -95,7 +95,7 @@ using TLT, except for dims. You may derive the dimensions of the input and outpu
    >
    >`model_stride=16` for all combinations of backbones with DetectNet_v2, except for a
    > Detectnet_v2 model with `efficientnet_b0` where the `model_stride=32`. For a complete
-   > list of backbone supported refer to the [TLT documentation](https://docs.nvidia.com/TLT/tlt-user-guide/text/open_images/overview.html).
+   > list of backbone supported refer to the [TAO Toolkit documentation](https://docs.nvidia.com/tao/tao-toolkit/text/open_images/overview.html).
 
 ### Configuring the Post-processor
 
@@ -188,7 +188,7 @@ The table below expands the configurable parameters defined under the `dbscan_co
 
 > Note:
 >
-> A unique key-value entry has to be defined for every class that the DetectNet_v2 model is trained for. <br>Please refer to the [DetectNet_v2 documentation](https://docs.nvidia.com/TLT/tlt-user-guide/text/object_detection/detectnet_v2.html#exporting-the-detectnet-v2-model)
+> A unique key-value entry has to be defined for every class that the DetectNet_v2 model is trained for. <br>Please refer to the [DetectNet_v2 documentation](https://docs.nvidia.com/tao/tao-toolkit/text/object_detection/detectnet_v2.html#exporting-the-detectnet-v2-model)
 > for more information on how to derive the class labels from the training configuration file of the network at export.
 
 The post processor configuration in a protobuf file, who's schema is defined in this [file](../python/proto/postprocessor_config.proto).
@@ -208,7 +208,7 @@ A sample model repository for an image classification VehicleTypeNet model would
 
 ```text
 model_repository_root/
-    vehicletypenet_tlt/
+    vehicletypenet_tao/
         config.pbtxt
         labels.txt
         1/
@@ -219,7 +219,7 @@ The `config.pbtxt` file, describes the model configuration for the model. A samp
 model would look like this.
 
 ```proto
-name: "vehicletypenet_tlt"
+name: "vehicletypenet_tao"
 platform: "tensorrt_plan"
 max_batch_size : 1
 input [
@@ -245,9 +245,9 @@ The following table explains the parameters in the config.pbtxt
 
 | **Parameter Name** | **Description** | **Type**  | **Supported Values**| **Sample Values**|
 | :----              | :-------------- | :-------: | :------------------ | :--------------- |
-| name | The user readable name of the served model | string |   | peoplenet_tlt|
+| name | The user readable name of the served model | string |   | peoplenet_tao|
 | platform | The backend used to parse and run the model | string | tensorrt_plan | tensorrt_plan |
-| max_batch_size | The maximum batch size used to create the TensorRT engine.<br>This should be the same as the `max_batch_size` parameter of the `tlt-converter`| int |  | 16 |
+| max_batch_size | The maximum batch size used to create the TensorRT engine.<br>This should be the same as the `max_batch_size` parameter of the `tao-converter`| int |  | 16 |
 | input | Configuration elements for the input nodes | list of protos/node |  |  |
 | output | Configuration elements for the output nodes | list of protos/node |  |  |
 | dynamic_batching | Configuration element to enable [dynamic batching](https://github.com/triton-inference-server/server/blob/main/docs/model_configuration.md#dynamic-batcher) using Triton | proto element |  |  |
@@ -256,10 +256,10 @@ The input and output elements in the config.pbtxt provide the configurable param
 that is being served. As seen in the sample, a classification model has 1 input node `input_1` and 1 output node `predictions/Softmax`
 
 All the parameters defined the `input` and `output` elements remain the same for any image classification model trained
-using TLT, except for the dims. You may derive the dimensions of the input and output nodes as follows:
+using TAO Toolkit, except for the dims. You may derive the dimensions of the input and output nodes as follows:
 
 1. For `input_1`, the parameter `dims` is the input dimensions of the model in C, H, W order (where C = Channels, H = height, W = Width).
-   This parameter should be indentical to the dimension mentioned to `-d` option of the `tlt-converter`.
+   This parameter should be indentical to the dimension mentioned to `-d` option of the `tao-converter`.
 
 2. For `predictions/Softmax`, the parameter `dims` is the output dimension of the coverage blob in C, H, W order. The value for the dimensions can
    be calculated as C = number of classes, H = 1 , W = 1

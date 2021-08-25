@@ -37,12 +37,12 @@ import tritonclient.http as httpclient
 from tritonclient.utils import InferenceServerException
 from tritonclient.utils import triton_to_np_dtype
 
-from tlt_triton.python.types import Frame, UserData
-from tlt_triton.python.postprocessing.detectnet_processor import DetectNetPostprocessor
-from tlt_triton.python.postprocessing.classification_postprocessor import ClassificationPostprocessor
-from tlt_triton.python.utils.kitti import write_kitti_annotation
-from tlt_triton.python.model.detectnet_model import DetectnetModel
-from tlt_triton.python.model.classification_model import ClassificationModel
+from tao_triton.python.types import Frame, UserData
+from tao_triton.python.postprocessing.detectnet_processor import DetectNetPostprocessor
+from tao_triton.python.postprocessing.classification_postprocessor import ClassificationPostprocessor
+from tao_triton.python.utils.kitti import write_kitti_annotation
+from tao_triton.python.model.detectnet_model import DetectnetModel
+from tao_triton.python.model.classification_model import ClassificationModel
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ def requestGenerator(batched_image_data, input_name, output_name, dtype, protoco
         output_name (list(str)): Name of the model outputs
         dtype: Tensor data type for Triton
         protocol (str): The protocol used to communicated between the Triton
-            server and TLT client.
+            server and TAO Toolkit client.
         num_classes (int): The number of classes in the network.
 
     Yields:

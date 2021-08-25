@@ -27,17 +27,17 @@ import numpy as np
 from sklearn.cluster import DBSCAN as dbscan
 from google.protobuf.text_format import Merge as merge_text_proto
 
-from tlt_triton.python.postprocessing.postprocessor import Postprocessor
-import tlt_triton.python.proto.postprocessor_config_pb2 as postprocessor_config_pb2
-from tlt_triton.python.types import KittiBbox
-from tlt_triton.python.postprocessing.utils import (
+from tao_triton.python.postprocessing.postprocessor import Postprocessor
+import tao_triton.python.proto.postprocessor_config_pb2 as postprocessor_config_pb2
+from tao_triton.python.types import KittiBbox
+from tao_triton.python.postprocessing.utils import (
     denormalize_bounding_bboxes,
     iou_vectorized,
     pool_context,
     render_image,
     thresholded_indices
 )
-from tlt_triton.python.utils.kitti import write_kitti_annotation
+from tao_triton.python.utils.kitti import write_kitti_annotation
 
 
 def load_clustering_config(config):

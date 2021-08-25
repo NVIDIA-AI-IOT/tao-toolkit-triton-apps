@@ -1,4 +1,4 @@
-name: "vehicletypenet_tlt"
+name: "vehicletypenet_tao"
 platform: "tensorrt_plan"
 max_batch_size : 1
 input [

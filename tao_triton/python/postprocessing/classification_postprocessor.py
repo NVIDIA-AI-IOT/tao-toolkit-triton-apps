@@ -24,7 +24,7 @@
 import os
 import numpy as np
 
-from tlt_triton.python.postprocessing.postprocessor import Postprocessor
+from tao_triton.python.postprocessing.postprocessor import Postprocessor
 
 
 class ClassificationPostprocessor(Postprocessor):
