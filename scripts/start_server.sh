@@ -67,6 +67,8 @@ wget --content-disposition ${ngc_dashcamnet} -O ${default_model_download_path}/d
      unzip ${default_model_download_path}/dashcamnet_pruned_v1.0.zip -d ${default_model_download_path}/dashcamnet_model/
 wget --content-disposition ${ngc_vehicletypenet} -O ${default_model_download_path}/vehicletypenet_pruned_v1.0.zip && \
      unzip ${default_model_download_path}/vehicletypenet_pruned_v1.0.zip -d ${default_model_download_path}/vehicletypenet_model/
+wget --content-disposition ${ngc_lprnet} -O ${default_model_download_path}/lprnet_pruned_v1.0.zip && \
+     unzip ${default_model_download_path}/lprnet_pruned_v1.0.zip -d ${default_model_download_path}/lprnet_model/
 rm -rf ${default_model_download_path}/*.zip
 
 # Run the server container.

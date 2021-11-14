@@ -1,0 +1,25 @@
+name: "lprnet_tao"
+platform: "tensorrt_plan"
+max_batch_size: 16
+input [
+  {
+    name: "image_input"
+    data_type: TYPE_FP32
+    format: FORMAT_NCHW
+    dims: [ 3, 48, 96 ]
+  }
+]
+output [
+  {
+    name: "tf_op_layer_ArgMax"
+    data_type: TYPE_INT32
+    dims: [ 24 ]
+    label_filename: "dict_us.txt"
+  },
+  {
+    name: "tf_op_layer_Max"
+    data_type: TYPE_FP32
+    dims: [ 24 ]
+  }
+]
+dynamic_batching { }

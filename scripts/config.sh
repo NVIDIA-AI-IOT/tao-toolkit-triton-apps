@@ -29,9 +29,11 @@ tao_triton_server_tag="21.03-py3"
 tlt_key_peoplenet="tlt_encode"
 tlt_key_dashcamnet="tlt_encode"
 tlt_key_vehicletypenet="tlt_encode"
+tlt_key_lprnet="nvidia_tlt"
 
 ngc_peoplenet="https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplenet/versions/pruned_v2.1/zip"
 ngc_dashcamnet="https://api.ngc.nvidia.com/v2/models/nvidia/tao/dashcamnet/versions/pruned_v1.0/zip"
 ngc_vehicletypenet="https://api.ngc.nvidia.com/v2/models/nvidia/tao/vehicletypenet/versions/pruned_v1.0/zip"
+ngc_lprnet="https://api.ngc.nvidia.com/v2/models/nvidia/tao/lprnet/versions/deployable_v1.0/zip"
 
 default_model_download_path="${tao_triton_root}/tao_models"

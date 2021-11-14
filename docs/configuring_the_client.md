@@ -5,6 +5,8 @@
   - [Configuring the Post-processor](#configuring-the-post-processor)
 - [Classification](#classification)
   - [Configuring the Classification model entry in the model repository](#configuring-the-classification-model-entry-in-the-model-repository)
+- [LPRNet](#lprnet)
+  - [Configuring the LPRNet model entry in the model repository](#configuring-the-lprnet-model-entry-in-the-model-repository)
 
 The inference client samples provided in this provide several parameters that the user can configure.
 This section elaborates about those parameters in more detail.
@@ -263,3 +265,115 @@ using TAO Toolkit, except for the dims. You may derive the dimensions of the inp
 
 2. For `predictions/Softmax`, the parameter `dims` is the output dimension of the coverage blob in C, H, W order. The value for the dimensions can
    be calculated as C = number of classes, H = 1 , W = 1
+
+## LPRNet
+
+The LPRNet inference sample has 2 component that can be configured
+
+1. [Model Repository](#lprnet-model-repository)
+
+### Configuring the LPRNet model entry in the model repository
+
+The model repository is the location on the Triton Server, where the model served from. Triton expects the models
+in the model repository to be follow the layout defined [here](https://github.com/triton-inference-server/server/blob/main/docs/model_repository.md#repository-layout).
+
+A sample model repository for an LPRnet model would have the following contents.
+
+```text
+model_repository_root/
+    lprnet_tao/
+        config.pbtxt
+        dict_us.txt
+        1/
+            model.plan
+```
+
+The `config.pbtxt` file, describes the model configuration for the model. A sample model configuration file for the LPRNet
+model would look like this.
+
+```proto
+name: "lprnet_tao"
+platform: "tensorrt_plan"
+max_batch_size : 16
+input [
+    {
+        name: "image_input"
+        data_type: TYPE_FP32
+        format: FORMAT_NCHW
+        dims: [ 3, 48, 96 ]
+    }
+]
+output [
+    {
+        name: "tf_op_layer_ArgMax"
+        data_type: TYPE_INT32
+        dims: [ 24 ]
+    },
+    {
+        name: "tf_op_layer_Max"
+        data_type: TYPE_FP32
+        dims: [ 24 ]
+    }
+
+]
+dynamic_batching { }
+```
+
+The following table explains the parameters in the config.pbtxt
+
+| **Parameter Name** | **Description** | **Type**  | **Supported Values**| **Sample Values**|
+| :----              | :-------------- | :-------: | :------------------ | :--------------- |
+| name | The user readable name of the served model | string |   | lprnet_tao|
+| platform | The backend used to parse and run the model | string | tensorrt_plan | tensorrt_plan |
+| max_batch_size | The maximum batch size used to create the TensorRT engine.<br>This should be the same as the `max_batch_size` parameter of the `tao-converter`| int |  | 16 |
+| input | Configuration elements for the input nodes | list of protos/node |  |  |
+| output | Configuration elements for the output nodes | list of protos/node |  |  |
+| dynamic_batching | Configuration element to enable [dynamic batching](https://github.com/triton-inference-server/server/blob/main/docs/model_configuration.md#dynamic-batcher) using Triton | proto element |  |  |
+
+The input and output elements in the config.pbtxt provide the configurable parameters for the input and output nodes of the model
+that is being served. As seen in the sample, a classification model has 1 input node `image_input` and 2 output node `tf_op_layer_ArgMax`
+and `tf_op_layer_Max`.
+
+### Configuring the Post-processor
+
+Please generate characters list file under `model_repository/lprnet_tao` folder. The file name should be characters_list.txt.
+A sample file for US license plate would look like this
+
+```proto
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+A
+B
+C
+D
+E
+F
+G
+H
+I
+J
+K
+L
+M
+N
+P
+Q
+R
+S
+T
+U
+V
+W
+X
+Y
+Z
+```
+This characters_list.txt file contains all the characters found in license plate dataset. Each character occupies one line.

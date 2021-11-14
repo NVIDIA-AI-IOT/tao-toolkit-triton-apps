@@ -35,4 +35,14 @@ tao-converter /tlt_models/vehicletypenet_model/resnet18_vehicletypenet_pruned.et
               -m 16 \
               -e /model_repository/vehicletypenet_tao/1/model.plan
 
+# Generate a vehicletypnet model.
+echo "Converting the LPRNet model"
+mkdir -p /model_repository/lprnet_tao/1
+tao-converter /tlt_models/lprnet_model/us_lprnet_baseline18_deployable.etlt \
+              -k nvidia_tlt \
+	      -p image_input,1x3x48x96,4x3x48x96,16x3x48x96 \
+	      -t fp16 \
+              -e /model_repository/lprnet_tao/1/model.plan  \
+
+
 /opt/tritonserver/bin/tritonserver --model-store /model_repository

@@ -40,20 +40,24 @@ from tritonclient.utils import triton_to_np_dtype
 from tao_triton.python.types import Frame, UserData
 from tao_triton.python.postprocessing.detectnet_processor import DetectNetPostprocessor
 from tao_triton.python.postprocessing.classification_postprocessor import ClassificationPostprocessor
+from tao_triton.python.postprocessing.lprnet_postprocessor import LPRPostprocessor
 from tao_triton.python.utils.kitti import write_kitti_annotation
 from tao_triton.python.model.detectnet_model import DetectnetModel
 from tao_triton.python.model.classification_model import ClassificationModel
+from tao_triton.python.model.lprnet_model import LPRModel
 
 logger = logging.getLogger(__name__)
 
 TRITON_MODEL_DICT = {
     "classification": ClassificationModel,
-    "detectnet_v2": DetectnetModel
+    "detectnet_v2": DetectnetModel,
+    "lprnet": LPRModel
 }
 
 POSTPROCESSOR_DICT = {
     "classification": ClassificationPostprocessor,
-    "detectnet_v2": DetectNetPostprocessor
+    "detectnet_v2": DetectNetPostprocessor,
+    "lprnet": LPRPostprocessor
 }
 
 
@@ -148,7 +152,7 @@ def parse_command_line(args=None):
                         help='Batch size. Default is 1.')
     parser.add_argument('--mode',
                         type=str,
-                        choices=['Classification', "DetectNet_v2"],
+                        choices=['Classification', "DetectNet_v2", "LPRNet"],
                         required=False,
                         default='NONE',
                         help='Type of scaling to apply to image pixels. Default is NONE.')
