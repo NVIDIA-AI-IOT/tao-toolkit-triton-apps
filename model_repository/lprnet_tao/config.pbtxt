@@ -14,7 +14,6 @@ output [
     name: "tf_op_layer_ArgMax"
     data_type: TYPE_INT32
     dims: [ 24 ]
-    label_filename: "dict_us.txt"
   },
   {
     name: "tf_op_layer_Max"
