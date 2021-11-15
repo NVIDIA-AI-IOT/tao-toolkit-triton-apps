@@ -7,6 +7,7 @@
   - [Configuring the Classification model entry in the model repository](#configuring-the-classification-model-entry-in-the-model-repository)
 - [LPRNet](#lprnet)
   - [Configuring the LPRNet model entry in the model repository](#configuring-the-lprnet-model-entry-in-the-model-repository)
+  - [Configuring the LPRNet model Post-processor](#configuring-the-lprnet-model-post-processor)
 
 The inference client samples provided in this provide several parameters that the user can configure.
 This section elaborates about those parameters in more detail.
@@ -271,6 +272,7 @@ using TAO Toolkit, except for the dims. You may derive the dimensions of the inp
 The LPRNet inference sample has 2 component that can be configured
 
 1. [Model Repository](#lprnet-model-repository)
+2. [Configuring the LPRNet model Post-processor](#configuring-the-lprnet-model-post-processor)
 
 ### Configuring the LPRNet model entry in the model repository
 
@@ -334,7 +336,7 @@ The input and output elements in the config.pbtxt provide the configurable param
 that is being served. As seen in the sample, a classification model has 1 input node `image_input` and 2 output node `tf_op_layer_ArgMax`
 and `tf_op_layer_Max`.
 
-### Configuring the Post-processor
+### Configuring the LPRnet model Post-processor
 
 Please generate characters list file under `model_repository/lprnet_tao` folder. The file name should be characters_list.txt.
 A sample file for US license plate would look like this

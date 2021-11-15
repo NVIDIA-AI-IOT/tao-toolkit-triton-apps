@@ -11,16 +11,21 @@
     - [Configuring the Post-processor](docs/configuring_the_client.md#configuring-the-post-processor)
   - [Classification](docs/configuring_the_client.md#classification)
     - [Configuring the Classification model entry in the model repository](docs/configuring_the_client.md#configuring-the-classification-model-entry-in-the-model-repository)
+  - [LPRNet](docs/configuring_the_client.md#lprnet)
+    - [Configuring the LPRNet model entry in the model repository](docs/configuring_the_client.md#configuring-the-lprnet-model-entry-in-the-model-repository)
+    - [Configuring the LPRNet model Post-processor](docs/configuring_the_client.md#configuring-the-lprnet-model-post-processor)
+
 
 NVIDIA Train Adapt Optimize (TAO) Toolkit, provides users an easy interface to generate accurate and optimized models
 for computer vision and conversational AI use cases. These models are generally deployed via the DeepStream SDK or
 Jarvis pipelines.
 
 This repository provides users with reference examples to infer the trained models with TAO Toolkit in Triton. For this commit,
-we provide reference applications for 2 computer vision models, namely:
+we provide reference applications for 2 computer vision models and 1 character recognition model, namely:
 
 - DetectNet_v2
 - Image Classification
+- LPRNet
 
 Triton is an NVIDIA developed inference software solution to efficiently deploy Deep Neural Networks (DNN) developed
 across several frameworks, for example TensorRT, Tensorflow, and ONNXRuntime. Triton Inference Server runs multiple
@@ -135,6 +140,7 @@ This sample walks through setting up instances of inferencing the following mode
 1. DashcamNet
 2. PeopleNet
 3. VehicleTypeNet
+4. LPRNet
 
 Simply run the quick start script:
 
@@ -152,7 +158,7 @@ The CLI options for this client application are as follows:
 ```text
 usage: tao_client.py [-h] [-v] [-a] [--streaming] -m MODEL_NAME
                      [-x MODEL_VERSION] [-b BATCH_SIZE]
-                     [--mode {Classification,DetectNet_v2}] [-u URL]
+                     [--mode {Classification,DetectNet_v2,LPRNet}] [-u URL]
                      [-i PROTOCOL] [--class_list CLASS_LIST] --output_path
                      OUTPUT_PATH
                      [--postprocessing_config POSTPROCESSING_CONFIG]
@@ -173,7 +179,7 @@ optional arguments:
                         Version of model. Default is to use latest version.
   -b BATCH_SIZE, --batch-size BATCH_SIZE
                         Batch size. Default is 1.
-  --mode {Classification, DetectNet_v2}
+  --mode {Classification, DetectNet_v2, LPRNet}
                         Type of scaling to apply to image pixels. Default is
                         NONE.
   -u URL, --url URL     Inference server URL. Default is localhost:8000.
@@ -225,7 +231,7 @@ For example,
         --postprocessing_config $tao_triton_root/tao_triton/python/clustering_specs/clustering_config_dashcamnet.prototxt 
   ```
 
-Similarly, for running an Image Classification model, the command line would be as follows:
+3. For running an Image Classification model, the command line would be as follows:
 
 ```sh
 python tao_client.py \
@@ -244,4 +250,24 @@ The output is generated in the `/path/to/the/output/directory/results.txt`, with
 
 ```text
 /path/to/image.jpg, 1.0000(2)= class_2, 0.0000(0)= class_0, 0.0000(3)= class_3, 0.0000(5)= class_5, 0.0000(4)= class_4, 0.0000(1)= class_1 .. 0.000(N)= class_N
+```
+
+3. For running LPRNet model, the command line would be as follows:
+
+```sh
+python tao_client.py \
+       /path/to/a/directory/of/images \
+       -m lprnet_tao \
+       -x 1 \
+       -b 1 \
+       --mode LPRNet \
+       -i https \
+       -u localhost:8000 \
+       --async \
+       --output_path /path/to/the/output/directory
+```
+The output is generated in the `/path/to/the/output/directory/results.txt`, with in the following format.
+
+```text
+/path/to/image.jpg : ['xxxxx']
 ```
