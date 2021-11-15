@@ -151,7 +151,7 @@ Simply run the quick start script:
 ### Running the client samples
 
 The Triton client to serve run TAO Toolkit models is implemented in the `${TAO_TRITON_REPO_ROOT}/tao_triton/python/entrypoints/tao_client.py`.
-This implementation is a reference example run to `detectnet_v2` and `classification`.
+This implementation is a reference example run to `detectnet_v2` , `classification` and `LPRNet`.
 
 The CLI options for this client application are as follows:
 
@@ -252,7 +252,7 @@ The output is generated in the `/path/to/the/output/directory/results.txt`, with
 /path/to/image.jpg, 1.0000(2)= class_2, 0.0000(0)= class_0, 0.0000(3)= class_3, 0.0000(5)= class_5, 0.0000(4)= class_4, 0.0000(1)= class_1 .. 0.000(N)= class_N
 ```
 
-3. For running LPRNet model, the command line would be as follows:
+4. For running LPRNet model, the command line would be as follows:
 
 ```sh
 python tao_client.py \
