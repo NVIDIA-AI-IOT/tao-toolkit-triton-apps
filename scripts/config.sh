@@ -23,15 +23,22 @@
 
 tao_triton_root=$PWD
 gpu_id=0
-tao_triton_server_docker="nvcr.io/nvidia/tao-triton"
-tao_triton_server_tag="21.03-py3"
+tao_triton_server_docker="nvcr.io/nvidia/tao/triton-apps"
+tao_triton_server_tag="21.11-py3"
 
+# Load key for the models.
 tlt_key_peoplenet="tlt_encode"
 tlt_key_dashcamnet="tlt_encode"
 tlt_key_vehicletypenet="tlt_encode"
 
-ngc_peoplenet="https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplenet/versions/pruned_v2.1/zip"
-ngc_dashcamnet="https://api.ngc.nvidia.com/v2/models/nvidia/tao/dashcamnet/versions/pruned_v1.0/zip"
-ngc_vehicletypenet="https://api.ngc.nvidia.com/v2/models/nvidia/tao/vehicletypenet/versions/pruned_v1.0/zip"
+# Setting model version to run inference on.
+peoplenet_version="pruned_quantized_v2.1.1"
+dashcamnet_version="pruned_v1.0.1"
+vehicletypenet_version="pruned_v1.0.1"
+
+# NGC URL's to download the model.
+ngc_peoplenet="https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplenet/versions/${peoplenet_version}/zip"
+ngc_dashcamnet="https://api.ngc.nvidia.com/v2/models/nvidia/tao/dashcamnet/versions/${dashcamnet_version}/zip"
+ngc_vehicletypenet="https://api.ngc.nvidia.com/v2/models/nvidia/tao/vehicletypenet/versions/${vehicletypenet_version}/zip"
 
 default_model_download_path="${tao_triton_root}/tao_models"
