@@ -59,7 +59,7 @@ source $config_path
 # Building the Triton docker with the tao-converter.
 docker build -f "${tao_triton_root}/docker/Dockerfile" \
              -t ${tao_triton_server_docker}:${tao_triton_server_tag} ${tao_triton_root}
-
+<<'COMMENT'
 mkdir ${default_model_download_path} && cd ${default_model_download_path}
 wget --content-disposition ${ngc_peoplenet} -O ${default_model_download_path}/peoplenet_${peoplenet_version}.zip && \
      unzip ${default_model_download_path}/peoplenet_${peoplenet_version}.zip -d ${default_model_download_path}/peoplenet_model/
@@ -83,16 +83,17 @@ mkdir ${default_model_download_path}/multitask_cls_model
 wget --no-check-certificate ${ngc_mcls_classification} -O ${default_model_download_path}/multitask_cls_model/multitask_cls_resnet18.etlt
 
 rm -rf ${default_model_download_path}/*.zip
+COMMENT
 
 # Run the server container.
 echo "Running the server on ${gpu_id}"
 docker run -it --rm -v ${tao_triton_root}/model_repository:/model_repository \
-                    -v ${default_model_download_path}:/tao_models \
-                    -v ${tao_triton_root}/scripts:/tao_triton \
-                    --gpus all \
-                    -p 8000:8000 \
-                    -p 8001:8001 \
-                    -p 8002:8002 \
-                    -e CUDA_VISIBLE_DEVICES=$gpu_id \
-                    ${tao_triton_server_docker}:${tao_triton_server_tag} \
-                    /tao_triton/download_and_convert.sh
+	            -v ${default_model_download_path}:/tao_models \
+		    -v ${tao_triton_root}/scripts:/tao_triton \
+		    --gpus all \
+		    -p 8000:8000 \
+		    -p 8001:8001 \
+		    -p 8002:8002 \
+		    -e CUDA_VISIBLE_DEVICES=$gpu_id \
+		    ${tao_triton_server_docker}:${tao_triton_server_tag} \
+		    /tao_triton/download_and_convert.sh

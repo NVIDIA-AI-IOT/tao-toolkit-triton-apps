@@ -79,7 +79,7 @@ class Frame(object):
             nparray = np.transpose(nparray, (2, 0, 1))
         return nparray
 
-        def _load_img(self):
+    def _load_img(self):
         """load an image and returns the original image and a numpy array for model to consume.
 
         Args:
@@ -89,11 +89,9 @@ class Frame(object):
             ratio (float): resize ratio of original image over processed image
             inference_input (array): numpy array for processed image
         """
-
         img = Image.open(self._image_path)
         orig_w, orig_h = img.size
         ratio = min(self.w/float(orig_w), self.h/float(orig_h))
-
 
         # do not change aspect ratio
         new_w = int(round(orig_w*ratio))
@@ -145,7 +143,6 @@ class Frame(object):
         orig_w, orig_h = img.size
         ratio = min(self.w/float(orig_w), self.h/float(orig_h))
 
-
         # do not change aspect ratio
         new_w = int(round(orig_w*ratio))
         new_h = int(round(orig_h*ratio))
@@ -195,4 +192,3 @@ class Frame(object):
         inference_input = preprocess_input(np.array(image).astype(np.float32).transpose(2, 0, 1))
 
         return inference_input
-
