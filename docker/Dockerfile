@@ -2,8 +2,7 @@
 FROM nvcr.io/nvidia/tritonserver:21.10-py3
 
 # Replace libnvinfer_plugin.so since some TRT plugins are not supported in TRT8. 
-# The peoplesegnet needs MultilevelCropAndResize.
-# The retinanet needs BatchTilePlugin.
+# The peoplesegnet needs MultilevelCropAndResize. The retinanet needs BatchTilePlugin.
 RUN wget https://nvidia.box.com/shared/static/7u2ocnwenwgrsx1yq8vv4hkfr0dg1rtm -O \
     /usr/lib/x86_64-linux-gnu/libnvinfer_plugin.so.8.0.3
 
