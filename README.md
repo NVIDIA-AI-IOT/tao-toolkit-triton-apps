@@ -285,6 +285,8 @@ python tao_client.py \
        --async \
        --output_path /path/to/the/output/directory
 ```
+The test dataset can be downloaded from https://github.com/openalpr/benchmarks/tree/master/seg_and_ocr/usimages.
+For example, `wget https://github.com/openalpr/benchmarks/raw/master/seg_and_ocr/usimages/ca286.png`
 The output is generated in the `/path/to/the/output/directory/results.txt`, with in the following format.
 
 ```text
@@ -352,4 +354,6 @@ python tao_client.py \
        --async \
        --output_path /path/to/the/output/directory
 ```
-The results are generated in the `/path/to/the/output/directory/result.txt`.
+The test dataset can be downloaded from https://www.kaggle.com/paramaggarwal/fashion-product-images-small.
+Before logining, you will need a Kaggle account. 
+The inferenced results are generated in the `/path/to/the/output/directory/result.txt`.
