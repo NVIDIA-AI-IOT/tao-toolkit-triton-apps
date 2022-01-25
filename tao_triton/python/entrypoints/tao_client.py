@@ -40,20 +40,40 @@ from tritonclient.utils import triton_to_np_dtype
 from tao_triton.python.types import Frame, UserData
 from tao_triton.python.postprocessing.detectnet_processor import DetectNetPostprocessor
 from tao_triton.python.postprocessing.classification_postprocessor import ClassificationPostprocessor
+from tao_triton.python.postprocessing.lprnet_postprocessor import LPRPostprocessor
+from tao_triton.python.postprocessing.yolov3_postprocessor import YOLOv3Postprocessor
+from tao_triton.python.postprocessing.peoplesegnet_postprocessor import PeoplesegnetPostprocessor
+from tao_triton.python.postprocessing.retinanet_postprocessor import RetinanetPostprocessor
+from tao_triton.python.postprocessing.multitask_classification_postprocessor import MultitaskClassificationPostprocessor
 from tao_triton.python.utils.kitti import write_kitti_annotation
 from tao_triton.python.model.detectnet_model import DetectnetModel
 from tao_triton.python.model.classification_model import ClassificationModel
+from tao_triton.python.model.lprnet_model import LPRModel
+from tao_triton.python.model.yolov3_model import YOLOv3Model
+from tao_triton.python.model.peoplesegnet_model import PeoplesegnetModel
+from tao_triton.python.model.retinanet_model import RetinanetModel
+from tao_triton.python.model.multitask_classification_model import MultitaskClassificationModel
 
 logger = logging.getLogger(__name__)
 
 TRITON_MODEL_DICT = {
     "classification": ClassificationModel,
-    "detectnet_v2": DetectnetModel
+    "detectnet_v2": DetectnetModel,
+    "lprnet": LPRModel,
+    "yolov3": YOLOv3Model,
+    "peoplesegnet": PeoplesegnetModel,
+    "retinanet": RetinanetModel,
+    "multitask_classification":MultitaskClassificationModel
 }
 
 POSTPROCESSOR_DICT = {
     "classification": ClassificationPostprocessor,
-    "detectnet_v2": DetectNetPostprocessor
+    "detectnet_v2": DetectNetPostprocessor,
+    "lprnet": LPRPostprocessor,
+    "yolov3": YOLOv3Postprocessor,
+    "peoplesegnet": PeoplesegnetPostprocessor,
+    "retinanet": RetinanetPostprocessor,
+    "multitask_classification": MultitaskClassificationPostprocessor
 }
 
 
@@ -148,7 +168,7 @@ def parse_command_line(args=None):
                         help='Batch size. Default is 1.')
     parser.add_argument('--mode',
                         type=str,
-                        choices=['Classification', "DetectNet_v2"],
+                        choices=['Classification', "DetectNet_v2", "LPRNet", "YOLOv3", "Peoplesegnet", "Retinanet", "Multitask_classification"],
                         required=False,
                         default='NONE',
                         help='Type of scaling to apply to image pixels. Default is NONE.')
@@ -299,12 +319,22 @@ def main():
 
             for idx in range(FLAGS.batch_size):
                 frame = frames[image_idx]
-                img = frame.load_image()
-                repeated_image_data.append(
-                    triton_model.preprocess(
-                        frame.as_numpy(img)
+                if FLAGS.mode.lower() == "yolov3" or FLAGS.mode.lower() == "retinanet":
+                    img = frame._load_img()
+                    repeated_image_data.append(img)
+                elif FLAGS.mode.lower() == "multitask_classification":
+                    img = frame._load_img_multitask_classification()
+                    repeated_image_data.append(img)
+                elif FLAGS.mode.lower() == "peoplesegnet":
+                    img = frame._load_img_maskrcnn()
+                    repeated_image_data.append(img)
+                else:
+                    img = frame.load_image()
+                    repeated_image_data.append(
+                        triton_model.preprocess(
+                            frame.as_numpy(img)
+                        )
                     )
-                )
                 image_idx = (image_idx + 1) % len(frames)
                 if image_idx == 0:
                     last_request = True
