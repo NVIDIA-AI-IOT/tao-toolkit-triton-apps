@@ -286,7 +286,8 @@ python tao_client.py \
        --output_path /path/to/the/output/directory
 ```
 The test dataset can be downloaded from https://github.com/openalpr/benchmarks/tree/master/seg_and_ocr/usimages.
-For example, `wget https://github.com/openalpr/benchmarks/raw/master/seg_and_ocr/usimages/ca286.png`
+For example, run following command to download.
+`wget https://github.com/openalpr/benchmarks/raw/master/seg_and_ocr/usimages/ca286.png`.
 The output is generated in the `/path/to/the/output/directory/results.txt`, with in the following format.
 
 ```text
@@ -306,6 +307,8 @@ python tao_client.py \
        --async \
        --output_path /path/to/the/output/directory
 ```
+The test image can be downloaded via following command.
+`wget https://developer.nvidia.com/sites/default/files/akamai/NGC_Images/models/peoplenet/input_11ft45deg_000070.jpg`.
 The infered images are generated in the `/path/to/the/output/directory/infer_images`.
 The labels are generated in the `/path/to/the/output/directory/infer_labels`.
 
@@ -322,6 +325,8 @@ python tao_client.py \
        --async \
        --output_path /path/to/the/output/directory
 ```
+The test image can be downloaded via following command.
+`wget https://developer.nvidia.com/sites/default/files/akamai/NGC_Images/models/peoplenet/input_11ft45deg_000070.jpg`.
 The infered images are generated in the `/path/to/the/output/directory/infer_images`.
 The labels are generated in the `/path/to/the/output/directory/infer_labels`.
 
@@ -338,6 +343,8 @@ python tao_client.py \
        --async \
        --output_path /path/to/the/output/directory
 ```
+The test image can be downloaded via following command.
+`wget https://developer.nvidia.com/sites/default/files/akamai/NGC_Images/models/peoplenet/input_11ft45deg_000070.jpg`.
 The infered images are generated in the `/path/to/the/output/directory/infer_images`.
 The labels are generated in the `/path/to/the/output/directory/infer_labels`.
 
