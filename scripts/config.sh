@@ -24,7 +24,7 @@
 tao_triton_root=$PWD
 gpu_id=0
 tao_triton_server_docker="nvcr.io/nvidia/tao/triton-apps"
-tao_triton_server_tag="21.11-py3"
+tao_triton_server_tag="22.02-py3"
 
 # Load key for the models.
 tlt_key_peoplenet="tlt_encode"
@@ -35,6 +35,7 @@ tlt_key_yolov3="nvidia_tlt"
 tlt_key_peoplesegnet="nvidia_tlt"
 tlt_key_retinanet="nvidia_tlt"
 tlt_key_multitask_classification="nvidia_tlt"
+tlt_key_pose_classification="nvidia_tao"
 
 # Setting model version to run inference on.
 peoplenet_version="pruned_quantized_v2.1.1"

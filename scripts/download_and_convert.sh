@@ -91,8 +91,9 @@ tao-converter /tao_models/multitask_cls_model/multitask_cls_resnet18.etlt \
 echo "Converting the pose_classification model"
 mkdir -p /model_repository/pose_classification_tao/1
 tao-converter /tao_models/pose_cls_model/pose_cls_st-gcn.etlt \
-              -k nvidia_tlt \
+              -k nvidia_tao \
               -d 3,300,34,1 \
+              -p input,1x3x300x34x1,4x3x300x34x1,16x3x300x34x1 \
               -o fc_pred \
               -t fp16 \
               -m 16 \
