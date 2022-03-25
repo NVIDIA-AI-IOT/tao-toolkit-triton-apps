@@ -87,4 +87,15 @@ tao-converter /tao_models/multitask_cls_model/multitask_cls_resnet18.etlt \
               -m 16 \
               -e /model_repository/multitask_classification_tao/1/model.plan
 
+# Generate a pose_classification model.
+echo "Converting the pose_classification model"
+mkdir -p /model_repository/pose_classification_tao/1
+tao-converter /tao_models/pose_cls_model/pose_cls_st-gcn.etlt \
+              -k nvidia_tlt \
+              -d 3,300,34,1 \
+              -o fc_pred \
+              -t fp16 \
+              -m 16 \
+              -e /model_repository/pose_classification_tao/1/model.plan
+
 /opt/tritonserver/bin/tritonserver --model-store /model_repository

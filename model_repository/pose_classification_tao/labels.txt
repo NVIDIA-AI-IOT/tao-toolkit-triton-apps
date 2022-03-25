@@ -1,0 +1,6 @@
+sit_down
+stand_up
+sit
+stand
+walk
+jump

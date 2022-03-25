@@ -81,6 +81,9 @@ wget --content-disposition ${ngc_peoplesegnet}  -O ${default_model_download_path
 rm -rf ${default_model_download_path}/multitask_cls_model
 mkdir ${default_model_download_path}/multitask_cls_model
 wget --no-check-certificate ${ngc_mcls_classification} -O ${default_model_download_path}/multitask_cls_model/multitask_cls_resnet18.etlt
+rm -rf ${default_model_download_path}/pose_cls_model
+mkdir ${default_model_download_path}/pose_cls_model
+wget --no-check-certificate ${ngc_pcls_classification} -O ${default_model_download_path}/pose_cls_model/pose_cls_st-gcn.etlt
 
 rm -rf ${default_model_download_path}/*.zip
 

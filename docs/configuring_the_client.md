@@ -20,6 +20,9 @@
 - [Multitask_classification](#multitask_classification)
   - [Configuring the Multitask_classification model entry in the model repository](#configuring-the-multitask_classification-model-entry-in-the-model-repository)
   - [Configuring the Multitask_classification model Post-processor](#configuring-the-multitask_classification-model-post-processor)
+- [Pose_classification](#pose_classification)
+  - [Configuring the Pose_classification model entry in the model repository](#configuring-the-pose_classification-model-entry-in-the-model-repository)
+  - [Configuring the Pose_classification model Post-processor](#configuring-the-pose_classification-model-post-processor)
 
 The inference client samples provided in this provide several parameters that the user can configure.
 This section elaborates about those parameters in more detail.
@@ -687,3 +690,70 @@ that is being served. As seen in the sample, a Multitask_classification model ha
 ### Configuring the Multitask_classification model Post-processor
 
 Refer to `model_repository/multitask_classification_tao` folder. 
+
+## Pose_classification
+
+The Pose_classification inference sample has 2 component that can be configured
+
+1. [Model Repository](#pose_classification-model-repository)
+2. [Configuring the Pose_classification model Post-processor](#configuring-the-pose_classification-model-post-processor)
+
+### Configuring the Pose_classification model entry in the model repository
+
+The model repository is the location on the Triton Server, where the model served from. Triton expects the models
+in the model repository to be follow the layout defined [here](https://github.com/triton-inference-server/server/blob/main/docs/model_repository.md#repository-layout).
+
+A sample model repository for an Pose_classification model would have the following contents.
+
+```text
+model_repository_root/
+    pose_classification_tao/
+        config.pbtxt
+        labels.txt
+        1/
+            model.plan
+```
+
+The `config.pbtxt` file, describes the model configuration for the model. A sample model configuration file for the Pose_classification
+model would look like this.
+
+```proto
+name: "pose_classification_tao"
+platform: "tensorrt_plan"
+max_batch_size: 16
+input [
+  {
+    name: "input"
+    data_type: TYPE_FP32
+    dims: [ 3, 300, 34, 1 ]
+  }
+]
+output [
+  {
+    name: "fc_pred"
+    data_type: TYPE_FP32
+    dims: [ 6 ]
+    reshape { shape: [ 6, 1, 1 ] }
+    label_filename: "labels.txt"
+  }
+]
+dynamic_batching { }
+```
+
+The following table explains the parameters in the config.pbtxt
+
+| **Parameter Name** | **Description** | **Type**  | **Supported Values**| **Sample Values**|
+| :----              | :-------------- | :-------: | :------------------ | :--------------- |
+| name | The user readable name of the served model | string |   | pose_classification_tao|
+| platform | The backend used to parse and run the model | string | tensorrt_plan | tensorrt_plan |
+| max_batch_size | The maximum batch size used to create the TensorRT engine.<br>This should be the same as the `max_batch_size` parameter of the `tao-converter`| int |  | 16 |
+| input | Configuration elements for the input nodes | list of protos/node |  |  |
+| output | Configuration elements for the output nodes | list of protos/node |  |  |
+| dynamic_batching | Configuration element to enable [dynamic batching](https://github.com/triton-inference-server/server/blob/main/docs/model_configuration.md#dynamic-batcher) using Triton | proto element |  |  |
+
+The input and output elements in the config.pbtxt provide the configurable parameters for the input and output nodes of the model
+that is being served. As seen in the sample, a Pose_classification model has 1 input node `input` and 1 output node `fc_pred`.
+
+### Configuring the Pose_classification model Post-processor
+
+Refer to `model_repository/pose_classification_tao` folder. 

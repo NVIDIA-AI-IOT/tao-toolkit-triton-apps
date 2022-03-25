@@ -1,0 +1,20 @@
+name: "pose_classification_tao"
+platform: "tensorrt_plan"
+max_batch_size: 16
+input [
+  {
+    name: "input"
+    data_type: TYPE_FP32
+    dims: [ 3, 300, 34, 1 ]
+  }
+]
+output [
+  {
+    name: "fc_pred"
+    data_type: TYPE_FP32
+    dims: [ 6 ]
+    reshape { shape: [ 6, 1, 1 ] }
+    label_filename: "labels.txt"
+  }
+]
+dynamic_batching { }

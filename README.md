@@ -26,6 +26,9 @@
   - [Multitask_classification](docs/configuring_the_client.md#multitask_classification)
     - [Configuring the Multitask_classification model entry in the model repository](docs/configuring_the_client.md#configuring-the-multitask_classification-model-entry-in-the-model-repository)
     - [Configuring the Multitask_classification model Post-processor](docs/configuring_the_client.md#configuring-the-multitask_classification-model-post-processor)
+  - [Pose_classification](docs/configuring_the_client.md#pose_classification)
+    - [Configuring the Pose_classification model entry in the model repository](docs/configuring_the_client.md#configuring-the-pose_classification-model-entry-in-the-model-repository)
+    - [Configuring the Pose_classification model Post-processor](docs/configuring_the_client.md#configuring-the-pose_classification-model-post-processor)
 
 NVIDIA Train Adapt Optimize (TAO) Toolkit, provides users an easy interface to generate accurate and optimized models
 for computer vision and conversational AI use cases. These models are generally deployed via the DeepStream SDK or
@@ -41,6 +44,7 @@ we provide reference applications for 6 computer vision models and 1 character r
 - Peoplesegnet(Maskrcnn)
 - Retinanet
 - Multitask Classification
+- Pose Classification
 
 Triton is an NVIDIA developed inference software solution to efficiently deploy Deep Neural Networks (DNN) developed
 across several frameworks, for example TensorRT, Tensorflow, and ONNXRuntime. Triton Inference Server runs multiple
@@ -160,6 +164,7 @@ This sample walks through setting up instances of inferencing the following mode
 6. Peoplesegnet
 7. Retinanet
 8. Multitask_classification
+9. Pose_classification
 
 Simply run the quick start script:
 
@@ -170,22 +175,22 @@ Simply run the quick start script:
 ### Running the client samples
 
 The Triton client to serve run TAO Toolkit models is implemented in the `${TAO_TRITON_REPO_ROOT}/tao_triton/python/entrypoints/tao_client.py`.
-This implementation is a reference example run to `detectnet_v2` , `classification` ,`LPRNet` , `YOLOv3` , `Peoplesegnet` , `Retinanet` and
-`Multitask_classification`.
+This implementation is a reference example run to `detectnet_v2` , `classification` ,`LPRNet` , `YOLOv3` , `Peoplesegnet` , `Retinanet` , `Multitask_classification` and
+`Pose_classification`.
 
 The CLI options for this client application are as follows:
 
 ```text
 usage: tao_client.py [-h] [-v] [-a] [--streaming] -m MODEL_NAME
                      [-x MODEL_VERSION] [-b BATCH_SIZE]
-                     [--mode {Classification,DetectNet_v2,LPRNet,YOLOv3,Peoplesegnet,Retinanet,Multitask_classification}] [-u URL]
+                     [--mode {Classification,DetectNet_v2,LPRNet,YOLOv3,Peoplesegnet,Retinanet,Multitask_classification,Pose_classification}] [-u URL]
                      [-i PROTOCOL] [--class_list CLASS_LIST] --output_path
                      OUTPUT_PATH
                      [--postprocessing_config POSTPROCESSING_CONFIG]
-                     [image_filename]
+                     [input_filename]
 
 positional arguments:
-  image_filename        Input image / Input folder.
+  input_filename        Input image / Input folder / Input pose sequences.
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -199,9 +204,8 @@ optional arguments:
                         Version of model. Default is to use latest version.
   -b BATCH_SIZE, --batch-size BATCH_SIZE
                         Batch size. Default is 1.
-  --mode {Classification, DetectNet_v2, LPRNet, YOLOv3, Peoplesegnet, Retinanet, Multitask_classification}
-                        Type of scaling to apply to image pixels. Default is
-                        NONE.
+  --mode {Classification, DetectNet_v2, LPRNet, YOLOv3, Peoplesegnet, Retinanet, Multitask_classification, Pose_classification}
+                        Type of network model. Default is NONE.
   -u URL, --url URL     Inference server URL. Default is localhost:8000.
   -i PROTOCOL, --protocol PROTOCOL
                         Protocol (HTTP/gRPC) used to communicate with the
@@ -363,4 +367,27 @@ python tao_client.py \
 ```
 The test dataset can be downloaded from https://www.kaggle.com/paramaggarwal/fashion-product-images-small.
 Before logining, you will need a Kaggle account. 
+The inferenced results are generated in the `/path/to/the/output/directory/result.txt`.
+
+9. For running Pose_classification model, the command line would be as follows:
+```sh
+python tao_client.py \
+       /path/to/a/file/of/pose/sequences \
+       -m pose_classification_tao \
+       -x 1 \
+       -b 1 \
+       --mode Pose_classification \
+       -i https \
+       -u localhost:8000 \
+       --async \
+       --output_path /path/to/the/output/directory
+```
+The test dataset can be downloaded from [here](https://drive.google.com/file/d/1GhSt53-7MlFfauEZ2YkuzOaZVNIGo_c-/view?usp=sharing).
+To generate the pose sequences from an input video, first process the video using the [3d-bodypose-deepstream](https://gitlab-master.nvidia.com/amkale/3d-bodypose-deepstream) app, and then convert the 3D pose metadata into arrays for inference using the preprocessing script [here](https://gitlab-master.nvidia.com/tlt/tlt-pytorch/-/blob/main/cv/pose_classification/scripts/preprocess.py). The command line would be as follows:
+```python
+python cv/pose_classification/entrypoint/pose_classification.py \
+       preprocess \
+       -r results \
+       -e cv/pose_classification/experiment_specs/preprocess_nvidia.yaml
+```
 The inferenced results are generated in the `/path/to/the/output/directory/result.txt`.

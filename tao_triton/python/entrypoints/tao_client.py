@@ -45,6 +45,7 @@ from tao_triton.python.postprocessing.yolov3_postprocessor import YOLOv3Postproc
 from tao_triton.python.postprocessing.peoplesegnet_postprocessor import PeoplesegnetPostprocessor
 from tao_triton.python.postprocessing.retinanet_postprocessor import RetinanetPostprocessor
 from tao_triton.python.postprocessing.multitask_classification_postprocessor import MultitaskClassificationPostprocessor
+from tao_triton.python.postprocessing.pose_classification_postprocessor import PoseClassificationPostprocessor
 from tao_triton.python.utils.kitti import write_kitti_annotation
 from tao_triton.python.model.detectnet_model import DetectnetModel
 from tao_triton.python.model.classification_model import ClassificationModel
@@ -53,6 +54,7 @@ from tao_triton.python.model.yolov3_model import YOLOv3Model
 from tao_triton.python.model.peoplesegnet_model import PeoplesegnetModel
 from tao_triton.python.model.retinanet_model import RetinanetModel
 from tao_triton.python.model.multitask_classification_model import MultitaskClassificationModel
+from tao_triton.python.model.pose_classification_model import PoseClassificationModel
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +65,8 @@ TRITON_MODEL_DICT = {
     "yolov3": YOLOv3Model,
     "peoplesegnet": PeoplesegnetModel,
     "retinanet": RetinanetModel,
-    "multitask_classification":MultitaskClassificationModel
+    "multitask_classification":MultitaskClassificationModel,
+    "pose_classification":PoseClassificationModel
 }
 
 POSTPROCESSOR_DICT = {
@@ -73,7 +76,8 @@ POSTPROCESSOR_DICT = {
     "yolov3": YOLOv3Postprocessor,
     "peoplesegnet": PeoplesegnetPostprocessor,
     "retinanet": RetinanetPostprocessor,
-    "multitask_classification": MultitaskClassificationPostprocessor
+    "multitask_classification": MultitaskClassificationPostprocessor,
+    "pose_classification": PoseClassificationPostprocessor
 }
 
 
@@ -90,12 +94,12 @@ def convert_http_metadata_config(_metadata, _config):
     return _model_metadata, _model_config
 
 
-def requestGenerator(batched_image_data, input_name, output_name, dtype, protocol,
+def requestGenerator(batched_input_data, input_name, output_name, dtype, protocol,
                      num_classes=0):
     """Generator for triton inference requests.
 
     Args:
-        batch_image_data (np.ndarray): Numpy array of a batch of images.
+        batch_input_data (np.ndarray): Numpy array of a batch of input data.
         input_name (str): Name of the input array
         output_name (list(str)): Name of the model outputs
         dtype: Tensor data type for Triton
@@ -115,8 +119,8 @@ def requestGenerator(batched_image_data, input_name, output_name, dtype, protoco
         client = httpclient
 
     # Set the input data
-    inputs = [client.InferInput(input_name, batched_image_data.shape, dtype)]
-    inputs[0].set_data_from_numpy(batched_image_data)
+    inputs = [client.InferInput(input_name, batched_input_data.shape, dtype)]
+    inputs[0].set_data_from_numpy(batched_input_data)
 
     outputs = [
         client.InferRequestedOutput(
@@ -168,7 +172,7 @@ def parse_command_line(args=None):
                         help='Batch size. Default is 1.')
     parser.add_argument('--mode',
                         type=str,
-                        choices=['Classification', "DetectNet_v2", "LPRNet", "YOLOv3", "Peoplesegnet", "Retinanet", "Multitask_classification"],
+                        choices=['Classification', "DetectNet_v2", "LPRNet", "YOLOv3", "Peoplesegnet", "Retinanet", "Multitask_classification", "Pose_classification"],
                         required=False,
                         default='NONE',
                         help='Type of scaling to apply to image pixels. Default is NONE.')
@@ -185,11 +189,11 @@ def parse_command_line(args=None):
                         default='HTTP',
                         help='Protocol (HTTP/gRPC) used to communicate with ' +
                         'the inference service. Default is HTTP.')
-    parser.add_argument('image_filename',
+    parser.add_argument('input_filename',
                         type=str,
                         nargs='?',
                         default=None,
-                        help='Input image / Input folder.')
+                        help='Input image / Input folder / Input pose sequences.')
     parser.add_argument('--class_list',
                         type=str,
                         default="person,bag,face",
@@ -267,23 +271,34 @@ def main():
     npdtype = triton_to_np_dtype(triton_model.triton_dtype)
     max_batch_size = triton_model.max_batch_size
     frames = []
-    if os.path.isdir(FLAGS.image_filename):
+    pose_sequences = None
+    # The input is a folder of images.
+    if os.path.isdir(FLAGS.input_filename):
         frames = [
-            Frame(os.path.join(FLAGS.image_filename, f),
+            Frame(os.path.join(FLAGS.input_filename, f),
                   triton_model.data_format,
                   npdtype,
                   target_shape)
-            for f in os.listdir(FLAGS.image_filename)
-            if os.path.isfile(os.path.join(FLAGS.image_filename, f)) and
+            for f in os.listdir(FLAGS.input_filename)
+            if os.path.isfile(os.path.join(FLAGS.input_filename, f)) and
             os.path.splitext(f)[-1] in [".jpg", ".jpeg", ".png"]
         ]
+    elif os.path.isfile(FLAGS.input_filename):
+        # The input is an image.
+        if os.path.splitext(FLAGS.input_filename)[-1] in [".jpg", ".jpeg", ".png"]:
+            frames = [
+                Frame(os.path.join(FLAGS.input_filename),
+                    triton_model.data_format,
+                    npdtype,
+                    target_shape)
+            ]
+        # The input is a series of pose sequences.
+        elif os.path.splitext(FLAGS.input_filename)[-1] == ".npy":
+            pose_sequences = np.load(file=FLAGS.input_filename)
+        else:
+            raise NotImplementedError("The input has to be a folder, an image, or pose sequences.")
     else:
-        frames = [
-            Frame(os.path.join(FLAGS.image_filename),
-                  triton_model.data_format,
-                  npdtype,
-                  target_shape)
-        ]
+        raise NotFoundError("Cannot find input at {}".format(FLAGS.input_filename))
 
     # Send requests of FLAGS.batch_size images. If the number of
     # images isn't an exact multiple of FLAGS.batch_size then just
@@ -292,15 +307,21 @@ def main():
     responses = []
     result_filenames = []
     request_ids = []
-    image_idx = 0
+    input_idx = 0
     last_request = False
     user_data = UserData()
     class_list = FLAGS.class_list.split(",")
-    args_postprocessor = [
-        FLAGS.batch_size, frames, FLAGS.output_path, triton_model.data_format
-    ]
-    if FLAGS.mode.lower() == "detectnet_v2":
-        args_postprocessor.extend([class_list, FLAGS.postprocessing_config, target_shape])
+    args_postprocessor = []
+    if FLAGS.mode.lower() == "pose_classification":
+        args_postprocessor = [
+            FLAGS.batch_size, pose_sequences, FLAGS.output_path
+        ]
+    else:
+        args_postprocessor = [
+            FLAGS.batch_size, frames, FLAGS.output_path, triton_model.data_format
+        ]
+        if FLAGS.mode.lower() == "detectnet_v2":
+            args_postprocessor.extend([class_list, FLAGS.postprocessing_config, target_shape])
     postprocessor = POSTPROCESSOR_DICT[FLAGS.mode.lower()](*args_postprocessor)
 
     # Holds the handles to the ongoing HTTP async requests.
@@ -312,13 +333,35 @@ def main():
         triton_client.start_stream(partial(completion_callback, user_data))
 
     logger.info("Sending inference request for batches of data")
-    with tqdm(total=len(frames)) as pbar:
-        while not last_request:
-            input_filenames = []
+    if FLAGS.mode.lower() == "pose_classification":
+        pbar = tqdm(total=pose_sequences.shape[0])
+    else:
+        pbar = tqdm(total=len(frames))
+    while not last_request:
+        batched_input_data = None
+
+        if FLAGS.mode.lower() == "pose_classification":
+            repeated_data = None
+
+            for idx in range(FLAGS.batch_size):
+                pose_sequence = pose_sequences[[input_idx], :, :, :, :]
+                if not repeated_data:
+                    repeated_data = pose_sequence
+                else:
+                    repeated_data = np.concatenate((repeated_data, pose_sequence), axis=0)
+                input_idx = (input_idx + 1) % len(frames)
+                if input_idx == 0:
+                    last_request = True
+
+            if max_batch_size > 0:
+                batched_input_data = repeated_data
+            else:
+                batched_input_data = repeated_data[[0], :, :, :, :]
+        else:
             repeated_image_data = []
 
             for idx in range(FLAGS.batch_size):
-                frame = frames[image_idx]
+                frame = frames[input_idx]
                 if FLAGS.mode.lower() == "yolov3" or FLAGS.mode.lower() == "retinanet":
                     img = frame._load_img()
                     repeated_image_data.append(img)
@@ -335,65 +378,65 @@ def main():
                             frame.as_numpy(img)
                         )
                     )
-                image_idx = (image_idx + 1) % len(frames)
-                if image_idx == 0:
+                input_idx = (input_idx + 1) % len(frames)
+                if input_idx == 0:
                     last_request = True
 
             if max_batch_size > 0:
-                batched_image_data = np.stack(repeated_image_data, axis=0)
+                batched_input_data = np.stack(repeated_image_data, axis=0)
             else:
-                batched_image_data = repeated_image_data[0]
+                batched_input_data = repeated_image_data[0]
 
-            # Send request
-            try:
-                req_gen_args = [batched_image_data, triton_model.input_names,
-                    triton_model.output_names, triton_model.triton_dtype,
-                    FLAGS.protocol.lower()]
-                req_gen_kwargs = {}
-                if FLAGS.mode.lower() == "classification":
-                    req_gen_kwargs["num_classes"] = model_config.output[0].dims[0]
-                req_generator = requestGenerator(*req_gen_args, **req_gen_kwargs)
-                for inputs, outputs in req_generator:
-                    sent_count += 1
-                    if FLAGS.streaming:
-                        triton_client.async_stream_infer(
+        # Send request
+        try:
+            req_gen_args = [batched_input_data, triton_model.input_names,
+                triton_model.output_names, triton_model.triton_dtype,
+                FLAGS.protocol.lower()]
+            req_gen_kwargs = {}
+            if FLAGS.mode.lower() in ["classification", "pose_classification"]:
+                req_gen_kwargs["num_classes"] = model_config.output[0].dims[0]
+            req_generator = requestGenerator(*req_gen_args, **req_gen_kwargs)
+            for inputs, outputs in req_generator:
+                sent_count += 1
+                if FLAGS.streaming:
+                    triton_client.async_stream_infer(
+                        FLAGS.model_name,
+                        inputs,
+                        request_id=str(sent_count),
+                        model_version=FLAGS.model_version,
+                        outputs=outputs)
+                elif FLAGS.async_set:
+                    if FLAGS.protocol.lower() == "grpc":
+                        triton_client.async_infer(
                             FLAGS.model_name,
                             inputs,
+                            partial(completion_callback, user_data),
                             request_id=str(sent_count),
                             model_version=FLAGS.model_version,
                             outputs=outputs)
-                    elif FLAGS.async_set:
-                        if FLAGS.protocol.lower() == "grpc":
+                    else:
+                        async_requests.append(
                             triton_client.async_infer(
                                 FLAGS.model_name,
                                 inputs,
-                                partial(completion_callback, user_data),
                                 request_id=str(sent_count),
                                 model_version=FLAGS.model_version,
-                                outputs=outputs)
-                        else:
-                            async_requests.append(
-                                triton_client.async_infer(
-                                    FLAGS.model_name,
-                                    inputs,
-                                    request_id=str(sent_count),
-                                    model_version=FLAGS.model_version,
-                                    outputs=outputs))
-                    else:
-                        responses.append(
-                            triton_client.infer(FLAGS.model_name,
-                                                inputs,
-                                                request_id=str(sent_count),
-                                                model_version=FLAGS.model_version,
-                                                outputs=outputs))
+                                outputs=outputs))
+                else:
+                    responses.append(
+                        triton_client.infer(FLAGS.model_name,
+                                            inputs,
+                                            request_id=str(sent_count),
+                                            model_version=FLAGS.model_version,
+                                            outputs=outputs))
 
-            except InferenceServerException as e:
-                print("inference failed: " + str(e))
-                if FLAGS.streaming:
-                    triton_client.stop_stream()
-                sys.exit(1)
-            
-            pbar.update(FLAGS.batch_size)
+        except InferenceServerException as e:
+            print("inference failed: " + str(e))
+            if FLAGS.streaming:
+                triton_client.stop_stream()
+            sys.exit(1)
+        
+        pbar.update(FLAGS.batch_size)
 
     if FLAGS.streaming:
         triton_client.stop_stream()
