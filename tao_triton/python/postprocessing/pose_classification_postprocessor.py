@@ -27,7 +27,7 @@ import numpy as np
 from tao_triton.python.postprocessing.postprocessor import Postprocessor
 
 
-class ClassificationPostprocessor(Postprocessor):
+class PoseClassificationPostprocessor(Postprocessor):
     """Class to run post processing of Triton Tensors."""
 
     def __init__(self, batch_size, sequences, output_path):
