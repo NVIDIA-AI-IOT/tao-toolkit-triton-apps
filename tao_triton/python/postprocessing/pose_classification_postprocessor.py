@@ -38,7 +38,9 @@ class PoseClassificationPostprocessor(Postprocessor):
             sequences (list): List of sequences.
             output_path (str): Unix path to the output rendered sequences and labels.
         """
-        super().__init__(batch_size, frames, output_path)
+        self.batch_size = batch_size
+        self.sequences = sequences
+        self.output_path = output_path
         self.output_name = "fc_pred"
 
     def apply(self, output_tensors, this_id, render=True, batching=True):
@@ -57,7 +59,7 @@ class PoseClassificationPostprocessor(Postprocessor):
                 results = output_array[idx]
                 current_idx = (int(this_id) - 1) * self.batch_size + idx
                 if current_idx < len(self.sequences):
-                    wfile.write("{}".format(self.sequences[current_idx]._sequence_path))
+                    wfile.write("{}".format(current_idx))
                     if not batching:
                         results = [results]
                     for result in results:

@@ -54,7 +54,14 @@ class PoseClassificationModel(TritonModel):
         Returns:
             An instance of the PoseClassificationModel.
         """
-        pass
+        self.max_batch_size = max_batch_size
+        self.input_names = input_names
+        self.output_names = output_names
+        self.channels = channels
+        self.seq_length = seq_length
+        self.num_joint = num_joint
+        self.num_person = num_person
+        self.triton_dtype = triton_dtype
 
     @staticmethod
     def parse_model(model_metadata, model_config):
@@ -89,10 +96,10 @@ class PoseClassificationModel(TritonModel):
                 format(expected_input_dims, model_metadata.name,
                     len(input_metadata.shape)))
 
-            c = input_metadata.shape[1 if input_batch_dim else 0]
-            t = input_metadata.shape[2 if input_batch_dim else 1]
-            v = input_metadata.shape[3 if input_batch_dim else 2]
-            m = input_metadata.shape[4 if input_batch_dim else 3]
+        c = input_metadata.shape[1 if input_batch_dim else 0]
+        t = input_metadata.shape[2 if input_batch_dim else 1]
+        v = input_metadata.shape[3 if input_batch_dim else 2]
+        m = input_metadata.shape[4 if input_batch_dim else 3]
 
         print(model_config.max_batch_size, input_metadata.name,
                 output_metadata.name, c, t, v, m,

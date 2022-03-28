@@ -267,38 +267,37 @@ def main():
             model_metadata, model_config)
 
     triton_model = TRITON_MODEL_DICT[FLAGS.mode.lower()].from_metadata(model_metadata, model_config)
-    target_shape = (triton_model.c, triton_model.h, triton_model.w)
-    npdtype = triton_to_np_dtype(triton_model.triton_dtype)
     max_batch_size = triton_model.max_batch_size
-    frames = []
     pose_sequences = None
-    # The input is a folder of images.
-    if os.path.isdir(FLAGS.input_filename):
-        frames = [
-            Frame(os.path.join(FLAGS.input_filename, f),
-                  triton_model.data_format,
-                  npdtype,
-                  target_shape)
-            for f in os.listdir(FLAGS.input_filename)
-            if os.path.isfile(os.path.join(FLAGS.input_filename, f)) and
-            os.path.splitext(f)[-1] in [".jpg", ".jpeg", ".png"]
-        ]
-    elif os.path.isfile(FLAGS.input_filename):
+    frames = []
+    # The input is a series of pose sequences.
+    if os.path.splitext(FLAGS.input_filename)[-1] == ".npy":
+        pose_sequences = np.load(file=FLAGS.input_filename)
+    else:
+        target_shape = (triton_model.c, triton_model.h, triton_model.w)
+        npdtype = triton_to_np_dtype(triton_model.triton_dtype)
+
+        # The input is a folder of images.
+        if os.path.isdir(FLAGS.input_filename):
+            frames = [
+                Frame(os.path.join(FLAGS.input_filename, f),
+                    triton_model.data_format,
+                    npdtype,
+                    target_shape)
+                for f in os.listdir(FLAGS.input_filename)
+                if os.path.isfile(os.path.join(FLAGS.input_filename, f)) and
+                os.path.splitext(f)[-1] in [".jpg", ".jpeg", ".png"]
+            ]
         # The input is an image.
-        if os.path.splitext(FLAGS.input_filename)[-1] in [".jpg", ".jpeg", ".png"]:
+        elif os.path.splitext(FLAGS.input_filename)[-1] in [".jpg", ".jpeg", ".png"]:
             frames = [
                 Frame(os.path.join(FLAGS.input_filename),
                     triton_model.data_format,
                     npdtype,
                     target_shape)
             ]
-        # The input is a series of pose sequences.
-        elif os.path.splitext(FLAGS.input_filename)[-1] == ".npy":
-            pose_sequences = np.load(file=FLAGS.input_filename)
         else:
             raise NotImplementedError("The input has to be a folder, an image, or pose sequences.")
-    else:
-        raise NotFoundError("Cannot find input at {}".format(FLAGS.input_filename))
 
     # Send requests of FLAGS.batch_size images. If the number of
     # images isn't an exact multiple of FLAGS.batch_size then just
@@ -349,7 +348,7 @@ def main():
                     repeated_data = pose_sequence
                 else:
                     repeated_data = np.concatenate((repeated_data, pose_sequence), axis=0)
-                input_idx = (input_idx + 1) % len(frames)
+                input_idx = (input_idx + 1) % pose_sequences.shape[0]
                 if input_idx == 0:
                     last_request = True
 
