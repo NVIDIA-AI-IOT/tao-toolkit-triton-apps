@@ -733,7 +733,6 @@ output [
     name: "fc_pred"
     data_type: TYPE_FP32
     dims: [ 6 ]
-    reshape { shape: [ 6, 1, 1 ] }
     label_filename: "labels.txt"
   }
 ]
