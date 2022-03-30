@@ -344,7 +344,7 @@ def main():
 
                 for idx in range(FLAGS.batch_size):
                     pose_sequence = pose_sequences[[image_idx], :, :, :, :]
-                    if not repeated_data:
+                    if repeated_data is None:
                         repeated_data = pose_sequence
                     else:
                         repeated_data = np.concatenate((repeated_data, pose_sequence), axis=0)

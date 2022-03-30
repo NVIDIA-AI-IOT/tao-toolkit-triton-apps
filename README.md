@@ -387,7 +387,7 @@ To generate the pose sequences from an input video, first process the video usin
 ```python
 python cv/pose_classification/entrypoint/pose_classification.py \
        preprocess \
-       -r results \
+       -r /path/to/the/output/directory \
        -e cv/pose_classification/experiment_specs/preprocess_nvidia.yaml
 ```
 The inferenced results are generated in the `/path/to/the/output/directory/result.txt`.
