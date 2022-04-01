@@ -27,6 +27,7 @@ tao_triton_server_docker="nvcr.io/nvidia/tao/triton-apps"
 tao_triton_server_tag="21.11-py3"
 
 # Load key for the models.
+tlt_key_nota="tlt_encode"
 tlt_key_peoplenet="tlt_encode"
 tlt_key_dashcamnet="tlt_encode"
 tlt_key_vehicletypenet="tlt_encode"
