@@ -192,7 +192,7 @@ def parse_command_line(args=None):
                         help='Input image / Input folder.')
     parser.add_argument('--class_list',
                         type=str,
-                        default="person,bag,face",
+                        default="truck,bicycle,bus,motorcycle,pedestrian,car",
                         help="Comma separated class names",
                         required=False)
     parser.add_argument('--output_path',
