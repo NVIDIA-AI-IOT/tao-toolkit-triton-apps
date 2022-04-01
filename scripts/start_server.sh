@@ -60,29 +60,29 @@ source $config_path
 docker build -f "${tao_triton_root}/docker/Dockerfile" \
              -t ${tao_triton_server_docker}:${tao_triton_server_tag} ${tao_triton_root}
 
-mkdir ${default_model_download_path} && cd ${default_model_download_path}
-wget --content-disposition ${ngc_peoplenet} -O ${default_model_download_path}/peoplenet_${peoplenet_version}.zip && \
-     unzip ${default_model_download_path}/peoplenet_${peoplenet_version}.zip -d ${default_model_download_path}/peoplenet_model/
-wget --content-disposition ${ngc_dashcamnet} -O ${default_model_download_path}/dashcamnet_${dashcamnet_version}.zip && \
-     unzip ${default_model_download_path}/dashcamnet_${dashcamnet_version}.zip -d ${default_model_download_path}/dashcamnet_model/
-wget --content-disposition ${ngc_vehicletypenet} -O ${default_model_download_path}/vehicletypenet_${vehicletypenet_version}.zip && \
-     unzip ${default_model_download_path}/vehicletypenet_${vehicletypenet_version}.zip -d ${default_model_download_path}/vehicletypenet_model/
-wget --content-disposition ${ngc_lprnet} -O ${default_model_download_path}/lprnet_pruned_v1.0.zip && \
-     unzip ${default_model_download_path}/lprnet_pruned_v1.0.zip -d ${default_model_download_path}/lprnet_model/
-wget --content-disposition ${ngc_yolov3} -O ${default_model_download_path}/models.zip && \
-     unzip ${default_model_download_path}/models.zip -d ${default_model_download_path}  && \
-     rm -rf ${default_model_download_path}/yolov3_model && \
-     mv ${default_model_download_path}/models/yolov3  ${default_model_download_path}/yolov3_model && \
-     rm -rf ${default_model_download_path}/retinanet_model && \
-     mv ${default_model_download_path}/models/retinanet  ${default_model_download_path}/retinanet_model && \
-     rm -rf ${default_model_download_path}/models
-wget --content-disposition ${ngc_peoplesegnet}  -O ${default_model_download_path}/peoplesegnet_deployable_v2.0.zip  && \
-     unzip ${default_model_download_path}/peoplesegnet_deployable_v2.0.zip -d ${default_model_download_path}/peoplesegnet_model/
-rm -rf ${default_model_download_path}/multitask_cls_model
-mkdir ${default_model_download_path}/multitask_cls_model
-wget --no-check-certificate ${ngc_mcls_classification} -O ${default_model_download_path}/multitask_cls_model/multitask_cls_resnet18.etlt
+# mkdir ${default_model_download_path} && cd ${default_model_download_path}
+# wget --content-disposition ${ngc_peoplenet} -O ${default_model_download_path}/peoplenet_${peoplenet_version}.zip && \
+#      unzip ${default_model_download_path}/peoplenet_${peoplenet_version}.zip -d ${default_model_download_path}/peoplenet_model/
+# wget --content-disposition ${ngc_dashcamnet} -O ${default_model_download_path}/dashcamnet_${dashcamnet_version}.zip && \
+#      unzip ${default_model_download_path}/dashcamnet_${dashcamnet_version}.zip -d ${default_model_download_path}/dashcamnet_model/
+# wget --content-disposition ${ngc_vehicletypenet} -O ${default_model_download_path}/vehicletypenet_${vehicletypenet_version}.zip && \
+#      unzip ${default_model_download_path}/vehicletypenet_${vehicletypenet_version}.zip -d ${default_model_download_path}/vehicletypenet_model/
+# wget --content-disposition ${ngc_lprnet} -O ${default_model_download_path}/lprnet_pruned_v1.0.zip && \
+#      unzip ${default_model_download_path}/lprnet_pruned_v1.0.zip -d ${default_model_download_path}/lprnet_model/
+# wget --content-disposition ${ngc_yolov3} -O ${default_model_download_path}/models.zip && \
+#      unzip ${default_model_download_path}/models.zip -d ${default_model_download_path}  && \
+#      rm -rf ${default_model_download_path}/yolov3_model && \
+#      mv ${default_model_download_path}/models/yolov3  ${default_model_download_path}/yolov3_model && \
+#      rm -rf ${default_model_download_path}/retinanet_model && \
+#      mv ${default_model_download_path}/models/retinanet  ${default_model_download_path}/retinanet_model && \
+#      rm -rf ${default_model_download_path}/models
+# wget --content-disposition ${ngc_peoplesegnet}  -O ${default_model_download_path}/peoplesegnet_deployable_v2.0.zip  && \
+#      unzip ${default_model_download_path}/peoplesegnet_deployable_v2.0.zip -d ${default_model_download_path}/peoplesegnet_model/
+# rm -rf ${default_model_download_path}/multitask_cls_model
+# mkdir ${default_model_download_path}/multitask_cls_model
+# wget --no-check-certificate ${ngc_mcls_classification} -O ${default_model_download_path}/multitask_cls_model/multitask_cls_resnet18.etlt
 
-rm -rf ${default_model_download_path}/*.zip
+# rm -rf ${default_model_download_path}/*.zip
 
 # Run the server container.
 echo "Running the server on ${gpu_id}"
