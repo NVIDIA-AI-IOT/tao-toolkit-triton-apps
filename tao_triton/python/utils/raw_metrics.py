@@ -103,51 +103,7 @@ class RawMetrics:
         inter = w * h
         iou = inter / (box1_area + box2_area - inter)
         return iou
-
-
-    def torch_predict(self, img_path, model, score_thr, nms_thr):
-        origin_img = cv2.imread(img_path)
-        # print(origin_img.shape)
-
-        input_shape = "544,960"
-        input_shape = tuple(map(int, input_shape.split(',')))
-        img, ratio = self.yolox.preprocess(origin_img, input_shape)
-    
-        model = model.eval()        
-        output = model(torch.tensor(img).view(1, 3, input_shape[0], input_shape[1]).cuda()).detach()
-        output = torch.cat([output[..., :4], output[..., 4:].sigmoid()], dim=-1)
-        output = output.cpu().numpy()
-
-        predictions = self.yolox.demo_postprocess(output, input_shape)[0]
-
-        boxes = predictions[:, :4]
-        scores = predictions[:, 4:5] * predictions[:, 5:]
         
-        boxes_xyxy = np.ones_like(boxes)
-        boxes_xyxy[:, 0] = boxes[:, 0] - boxes[:, 2]/2.
-        boxes_xyxy[:, 1] = boxes[:, 1] - boxes[:, 3]/2.
-        boxes_xyxy[:, 2] = boxes[:, 0] + boxes[:, 2]/2.
-        boxes_xyxy[:, 3] = boxes[:, 1] + boxes[:, 3]/2.
-        boxes_xyxy /= ratio
-
-        dets = self.yolox.multiclass_nms(boxes_xyxy, scores, nms_thr=nms_thr, score_thr=score_thr)
-
-        if dets is None:
-            return None
-        else:
-            final_boxes, final_scores, final_cls_inds = dets[:, :4], dets[:, 4], dets[:, 5]
-
-        label_names = ["car", "bus", "hdv", "truck", "motorcycle", "bicycle", "personal_mobility", "firetruck", "police", "ambulance", "pedestrian"]
-
-        results = []
-        for i in range(dets.shape[0]):
-            results.append({
-                "label": label_names[int(final_cls_inds[i])],
-                "points": list(final_boxes[i]),
-            })
-
-        return results
-
 
     def get_raw_metrics(
         self, 
