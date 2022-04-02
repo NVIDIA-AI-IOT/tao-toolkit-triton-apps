@@ -12,10 +12,10 @@ from tao_triton.python.model.nota_yolox import YOLOX
 
 class RawMetrics:
     def __init__(self):
-        self.yolox_data_dir = f'./selected'
-        self.image_dir = f"{self.yolox_data_dir}/JPEGImages"
-        self.annotation_dir = f"{self.yolox_data_dir}/Annotations"
-        self.testset_txt_path = f"{self.yolox_data_dir}/ImageSets/Main/test.txt"
+        self.data_dir = f'./selected'
+        self.image_dir = f"{self.data_dir}/JPEGImages"
+        self.annotation_dir = f"{self.data_dir}/Annotations"
+        self.testset_txt_path = f"{self.data_dir}/ImageSets/Main/test.txt"
         
         self.npos = self._get_total_pos()
         self.yolox = YOLOX()
@@ -103,7 +103,7 @@ class RawMetrics:
         inter = w * h
         iou = inter / (box1_area + box2_area - inter)
         return iou
-        
+
 
     def get_raw_metrics(
         self, 
