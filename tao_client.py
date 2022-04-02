@@ -469,7 +469,7 @@ def main():
     
     logger.info("PASS")
     print(f"실제로 존재하는 객체 수: {raw_metrics.npos}")
-    print(f"confusion matrix: {raw_metrics.cnts}")
+    print(f"confusion matrix: {raw_metrics_res}")
 
 if __name__ == '__main__':
     main()
