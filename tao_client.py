@@ -53,6 +53,7 @@ from tao_triton.python.model.yolov3_model import YOLOv3Model
 from tao_triton.python.model.peoplesegnet_model import PeoplesegnetModel
 from tao_triton.python.model.retinanet_model import RetinanetModel
 from tao_triton.python.model.multitask_classification_model import MultitaskClassificationModel
+from tao_triton.python.utils.raw_metrics import RawMetrics
 
 logger = logging.getLogger(__name__)
 
@@ -417,6 +418,9 @@ def main():
 
     logger.info("Gathering responses from the server and post processing the inferenced outputs.")
     processed_request = 0
+
+    raw_metrics = RawMetrics()
+
     with tqdm(total=len(frames)) as pbar:
         while processed_request < sent_count:
             response = responses[processed_request]
@@ -424,11 +428,26 @@ def main():
                 this_id = response.get_response().id
             else:
                 this_id = response.get_response()["id"]
-            postprocessor.apply(
+
+            total_boxes = []
+            total_labels = []
+            postprocess_results = postprocessor.apply(
                 response, this_id, render=True
             )
+            total_boxes.extend(postprocess_results["batchwise_boxes"])
+            total_labels.extend(postprocess_results["batchwise_labels"])
+
             processed_request += 1
             pbar.update(FLAGS.batch_size)
+
+    raw_metrics_res = raw_metrics.get_raw_metrics(
+        points=total_boxes,
+        labels=total_labels,
+        nms_thr=0.45, 
+        score_thr=0.4, 
+        iou_thr=0.5
+    )
+    
     logger.info("PASS")
 
 if __name__ == '__main__':

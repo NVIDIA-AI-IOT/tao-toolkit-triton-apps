@@ -137,6 +137,7 @@ class DetectNetPostprocessor(Postprocessor):
             self.coverage_thresholds
         )
         batchwise_boxes = []
+        batchwise_labels = []
         for image_idx, indices in enumerate(valid_indices):
             covs = output_array["output_cov/Sigmoid"][image_idx, :, :, :]
             bboxes = abs_bbox[image_idx, :, :, :]
@@ -188,6 +189,7 @@ class DetectNetPostprocessor(Postprocessor):
                     else:
                         continue
                 imagewise_boxes.extend(clustered_boxes)
+            batchwise_labels.append(labelling)
             batchwise_boxes.append(imagewise_boxes)
 
         if render:
@@ -227,3 +229,8 @@ class DetectNetPostprocessor(Postprocessor):
             
                 for p in processes:
                     p.wait()
+
+        return {
+            "batchwise_boxes": batchwise_boxes,
+            "batchwise_labels": batchwise_labels
+        }

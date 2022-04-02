@@ -109,7 +109,7 @@ class RawMetrics:
         return iou
 
 
-    def predict(self, img_path, model, score_thr, nms_thr):
+    def torch_predict(self, img_path, model, score_thr, nms_thr):
         origin_img = cv2.imread(img_path)
         # print(origin_img.shape)
 
@@ -155,14 +155,14 @@ class RawMetrics:
 
     def get_raw_metrics(
         self, 
-        model,
+        points,
+        labels,
         nms_thr=0.45, 
         score_thr=0.4, 
         iou_thr=0.5
     ):
         with open(self.testset_txt_path) as f:
             lines = f.read().splitlines()
-
 
         cnts = {
             "car": np.array([0, 0]), 
@@ -179,25 +179,14 @@ class RawMetrics:
         }
 
         for line in tqdm(lines):
-            results = self.predict(
-                img_path=f"{self.image_dir}/{line}.jpg", 
-                model=model, 
-                score_thr=score_thr, 
-                nms_thr=nms_thr
-            )
-            if results is None:
+            if len(labels) == 0:
                 continue
-
-            result = {"point": [], "label": []}
-            for r in results:
-                result["point"].append(r["points"])
-                result["label"].append(r["label"])
                 
             actual_labels, actual_bboxes = self._get_actual_bboxes(xml_path=f"{self.annotation_dir}/{line}.xml")
             
             cnt = self._count_res(
-                pred_bboxes=result["point"], 
-                pred_labels=result["label"], 
+                pred_bboxes=points, 
+                pred_labels=labels,
                 actual_bboxes=actual_bboxes, 
                 actual_labels=actual_labels,
                 iou_thr=iou_thr,
