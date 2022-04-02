@@ -19,6 +19,7 @@ class RawMetrics:
         
         self.npos = self._get_total_pos()
         self.yolox = YOLOX()
+        print(self.npos)
 
         self.cnts = {
             "car": np.array([0, 0]), 
@@ -33,6 +34,7 @@ class RawMetrics:
             "ambulance":np.array([0, 0]), 
             "pedestrian":np.array([0, 0])
         }
+        self.metrics = {}
 
     def _get_actual_bboxes(self, xml_path):
         tree = parse(xml_path)
@@ -172,15 +174,14 @@ class RawMetrics:
             iou_thr=iou_thr,
         )
 
-        metrics = {}
         for cls in self.cnts.keys():
             fp = self.cnts[cls][0]
             tp = self.cnts[cls][1]
             fn = self.npos[cls] - tp
             
-            metrics[f"{cls}_FP"] = fp
-            metrics[f"{cls}_TP"] = tp
-            metrics[f"{cls}_FN"] = fn
-            
-        return metrics
+            self.metrics[f"{cls}_FP"] = fp
+            self.metrics[f"{cls}_TP"] = tp
+            self.metrics[f"{cls}_FN"] = fn
+
+        return self.metrics
     
