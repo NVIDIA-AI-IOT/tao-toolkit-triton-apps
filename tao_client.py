@@ -430,15 +430,15 @@ def main():
                 this_id = response.get_response()["id"]
 
             total_boxes = []
-            total_labels = []
             postprocess_results = postprocessor.apply(
                 response, this_id, render=True
             )
             total_boxes.extend(postprocess_results["batchwise_boxes"])
-            total_labels.extend(postprocess_results["batchwise_labels"])
 
             processed_request += 1
             pbar.update(FLAGS.batch_size)
+
+    print(total_boxes)
 
     raw_metrics_res = raw_metrics.get_raw_metrics(
         points=total_boxes,
