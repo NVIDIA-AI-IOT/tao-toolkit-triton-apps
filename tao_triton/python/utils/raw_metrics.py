@@ -21,12 +21,12 @@ class RawMetrics:
         self.yolox = YOLOX()
 
         self.cnts = {
-            "truck": np.array([0, 0]), 
-            "bicycle": np.array([0, 0]), 
             "bus": np.array([0, 0]), 
+            "truck": np.array([0, 0]), 
+            "car": np.array([0, 0]), 
             "motorcycle": np.array([0, 0]), 
             "pedestrian":np.array([0, 0]), 
-            "car": np.array([0, 0])
+            "bicycle": np.array([0, 0])
         }
         self.metrics = {}
 
@@ -159,12 +159,6 @@ class RawMetrics:
         iou_thr=0.5
     ):
         actual_labels, actual_bboxes = self._get_actual_bboxes(xml_path=f"{self.annotation_dir}/{file_name}.xml")
-
-        print(file_name)
-        print(pred_bboxes)
-        print(pred_labels)
-        print(actual_bboxes)
-        print(actual_labels)
             
         cnts = self._count_res(
             pred_bboxes=pred_bboxes, 

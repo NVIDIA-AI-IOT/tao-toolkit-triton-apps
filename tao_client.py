@@ -193,7 +193,7 @@ def parse_command_line(args=None):
                         help='Input image / Input folder.')
     parser.add_argument('--class_list',
                         type=str,
-                        default="truck,bicycle,bus,motorcycle,pedestrian,car",
+                        default="car,bus,truck,motorcycle,pedestrian,bicycle",
                         help="Comma separated class names",
                         required=False)
     parser.add_argument('--output_path',
@@ -463,8 +463,7 @@ def main():
                     cnt += 1
                 except:
                     pass
-            
-            print(cnt)
+        
             processed_request += 1
             pbar.update(FLAGS.batch_size)
     
