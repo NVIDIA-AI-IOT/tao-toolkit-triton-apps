@@ -171,9 +171,9 @@ class RawMetrics:
             actual_labels=actual_labels,
             iou_thr=iou_thr,
         )
-        
+
         metrics = {}
-        for cls in cnt.keys():
+        for cls in self.cnts.keys():
             fp = self.cnts[cls][0]
             tp = self.cnts[cls][1]
             fn = self.npos[cls] - tp

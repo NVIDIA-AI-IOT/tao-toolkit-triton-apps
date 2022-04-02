@@ -439,8 +439,6 @@ def main():
                 response, this_id, render=True
             ) # (batch_size, N_predicted_object)
 
-            print(postprocess_results)
-
             for postprocess_result in postprocess_results["batchwise_boxes"]:
                 pred_bboxes = []
                 pred_labels = []
