@@ -468,8 +468,8 @@ def main():
             pbar.update(FLAGS.batch_size)
     
     logger.info("PASS")
-    print(실제로 존재하는 객체 수: raw_metrics.npos)
-    print(confusion matrix: raw_metrics.cnts)
+    print(f"실제로 존재하는 객체 수: {raw_metrics.npos}")
+    print(f"confusion matrix: {raw_metrics.cnts}")
 
 if __name__ == '__main__':
     main()
