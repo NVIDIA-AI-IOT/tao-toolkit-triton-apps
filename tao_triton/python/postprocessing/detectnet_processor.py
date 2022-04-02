@@ -142,6 +142,7 @@ class DetectNetPostprocessor(Postprocessor):
             covs = output_array["output_cov/Sigmoid"][image_idx, :, :, :]
             bboxes = abs_bbox[image_idx, :, :, :]
             imagewise_boxes = []
+            labeling = None
             for class_idx in range(len(self.classes)):
                 clustered_boxes = []
                 cw_config = self.pproc_config.classwise_clustering_config[
@@ -189,7 +190,10 @@ class DetectNetPostprocessor(Postprocessor):
                     else:
                         continue
                 imagewise_boxes.extend(clustered_boxes)
-            batchwise_labels.append(labelling)
+            try:
+                batchwise_labels.append(labeling)
+            except:
+                pass
             batchwise_boxes.append(imagewise_boxes)
 
         if render:
