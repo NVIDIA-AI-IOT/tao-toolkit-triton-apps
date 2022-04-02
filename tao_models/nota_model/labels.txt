@@ -1,6 +1,6 @@
+truck
 bicycle
 bus
-car
 motorcycle
 pedestrian
-truck
+car
