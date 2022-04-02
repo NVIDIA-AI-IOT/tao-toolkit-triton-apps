@@ -268,16 +268,20 @@ def main():
     npdtype = triton_to_np_dtype(triton_model.triton_dtype)
     max_batch_size = triton_model.max_batch_size
     frames = []
+    file_names = []
+
     if os.path.isdir(FLAGS.image_filename):
-        frames = [
-            Frame(os.path.join(FLAGS.image_filename, f),
-                  triton_model.data_format,
-                  npdtype,
-                  target_shape)
-            for f in os.listdir(FLAGS.image_filename)
-            if os.path.isfile(os.path.join(FLAGS.image_filename, f)) and
-            os.path.splitext(f)[-1] in [".jpg", ".jpeg", ".png"]
-        ]
+        for f in os.listdir(FLAGS.image_filename):
+            if os.path.isfile(os.path.join(FLAGS.image_filename, f)) and \
+                (os.path.splitext(f)[-1] in [".jpg", ".jpeg", ".png"]):
+                
+                frames = [
+                    Frame(os.path.join(FLAGS.image_filename, f),
+                        triton_model.data_format,
+                        npdtype,
+                        target_shape)
+                ]
+                file_names.append(f.split(".")[0])
     else:
         frames = [
             Frame(os.path.join(FLAGS.image_filename),
@@ -419,8 +423,10 @@ def main():
     logger.info("Gathering responses from the server and post processing the inferenced outputs.")
     processed_request = 0
 
+    # raw metrics 로깅을 위한 인스턴스 생성
     raw_metrics = RawMetrics()
 
+    cnt = 0
     with tqdm(total=len(frames)) as pbar:
         while processed_request < sent_count:
             response = responses[processed_request]
@@ -429,24 +435,23 @@ def main():
             else:
                 this_id = response.get_response()["id"]
 
-            total_boxes = []
             postprocess_results = postprocessor.apply(
                 response, this_id, render=True
             )
-            total_boxes.extend(postprocess_results["batchwise_boxes"])
+
+            for postprocess_result in postprocess_results:
+                raw_metrics_res = raw_metrics.get_raw_metrics(
+                    file_name=file_names[cnt]
+                    pred_bboxes=None,
+                    pred_labels=None,
+                    nms_thr=0.45, 
+                    score_thr=0.4, 
+                    iou_thr=0.5
+                )
+                cnt += 1
 
             processed_request += 1
             pbar.update(FLAGS.batch_size)
-
-    print(total_boxes)
-
-    raw_metrics_res = raw_metrics.get_raw_metrics(
-        points=total_boxes,
-        labels=total_labels,
-        nms_thr=0.45, 
-        score_thr=0.4, 
-        iou_thr=0.5
-    )
     
     logger.info("PASS")
 

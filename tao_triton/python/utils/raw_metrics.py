@@ -155,8 +155,9 @@ class RawMetrics:
 
     def get_raw_metrics(
         self, 
-        points,
-        labels,
+        file_name,
+        pred_bboxes,
+        pred_labels,
         nms_thr=0.45, 
         score_thr=0.4, 
         iou_thr=0.5
