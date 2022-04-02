@@ -12,14 +12,13 @@ from tao_triton.python.model.nota_yolox import YOLOX
 
 class RawMetrics:
     def __init__(self):
-        self.yolox_data_dir = f'./VOC2012'
+        self.yolox_data_dir = f'./selected'
         self.image_dir = f"{self.yolox_data_dir}/JPEGImages"
         self.annotation_dir = f"{self.yolox_data_dir}/Annotations"
         self.testset_txt_path = f"{self.yolox_data_dir}/ImageSets/Main/test.txt"
         
         self.npos = self._get_total_pos()
         self.yolox = YOLOX()
-        print(self.npos)
 
         self.cnts = {
             "car": np.array([0, 0]), 

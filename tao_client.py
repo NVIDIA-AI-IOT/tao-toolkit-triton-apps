@@ -271,17 +271,20 @@ def main():
     file_names = []
 
     if os.path.isdir(FLAGS.image_filename):
+        frames = [
+            Frame(os.path.join(FLAGS.image_filename, f),
+                  triton_model.data_format,
+                  npdtype,
+                  target_shape)
+            for f in os.listdir(FLAGS.image_filename)
+            if os.path.isfile(os.path.join(FLAGS.image_filename, f)) and
+            os.path.splitext(f)[-1] in [".jpg", ".jpeg", ".png"]
+        ]
+
         for f in os.listdir(FLAGS.image_filename):
             if os.path.isfile(os.path.join(FLAGS.image_filename, f)) and \
                 (os.path.splitext(f)[-1] in [".jpg", ".jpeg", ".png"]):
-                
-                frames = [
-                    Frame(os.path.join(FLAGS.image_filename, f),
-                        triton_model.data_format,
-                        npdtype,
-                        target_shape)
-                ]
-                file_names.append(f.split(".")[0])
+                    file_names.append(f.split(".")[0])
     else:
         frames = [
             Frame(os.path.join(FLAGS.image_filename),
@@ -448,20 +451,25 @@ def main():
 
                 # print(file_names[cnt], pred_bboxes, pred_labels)
 
-                raw_metrics_res = raw_metrics.get_raw_metrics(
-                    file_name=file_names[cnt],
-                    pred_bboxes=pred_bboxes,
-                    pred_labels=pred_labels,
-                    nms_thr=0.45, 
-                    score_thr=0.4, 
-                    iou_thr=0.5
-                )
-                cnt += 1
-
+                try:
+                    raw_metrics_res = raw_metrics.get_raw_metrics(
+                        file_name=file_names[cnt],
+                        pred_bboxes=pred_bboxes,
+                        pred_labels=pred_labels,
+                        nms_thr=0.45, 
+                        score_thr=0.4, 
+                        iou_thr=0.5
+                    )
+                    cnt += 1
+                except:
+                    pass
+            
+            print(cnt)
             processed_request += 1
             pbar.update(FLAGS.batch_size)
     
     logger.info("PASS")
+    print(raw_metrics_res)
 
 if __name__ == '__main__':
     main()
