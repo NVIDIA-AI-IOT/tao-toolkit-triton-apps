@@ -437,13 +437,23 @@ def main():
 
             postprocess_results = postprocessor.apply(
                 response, this_id, render=True
-            )
+            ) # (batch_size, N_predicted_object)
 
-            for postprocess_result in postprocess_results:
+            print(postprocess_results)
+
+            for postprocess_result in postprocess_results["batchwise_boxes"]:
+                pred_bboxes = []
+                pred_labels = []
+                for obj in postprocess_result:
+                    pred_bboxes.append(obj.box)
+                    pred_labels.append(obj.category)
+
+                # print(file_names[cnt], pred_bboxes, pred_labels)
+
                 raw_metrics_res = raw_metrics.get_raw_metrics(
-                    file_name=file_names[cnt]
-                    pred_bboxes=None,
-                    pred_labels=None,
+                    file_name=file_names[cnt],
+                    pred_bboxes=pred_bboxes,
+                    pred_labels=pred_labels,
                     nms_thr=0.45, 
                     score_thr=0.4, 
                     iou_thr=0.5

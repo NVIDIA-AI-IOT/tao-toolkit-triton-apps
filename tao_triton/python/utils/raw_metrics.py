@@ -20,6 +20,20 @@ class RawMetrics:
         self.npos = self._get_total_pos()
         self.yolox = YOLOX()
 
+        self.cnts = {
+            "car": np.array([0, 0]), 
+            "bus": np.array([0, 0]), 
+            "hdv": np.array([0, 0]), 
+            "truck": np.array([0, 0]), 
+            "motorcycle":np.array([0, 0]), 
+            "bicycle": np.array([0, 0]), 
+            "personal_mobility":np.array([0, 0]), 
+            "firetruck":np.array([0, 0]), 
+            "police":np.array([0, 0]), 
+            "ambulance":np.array([0, 0]), 
+            "pedestrian":np.array([0, 0])
+        }
+
     def _get_actual_bboxes(self, xml_path):
         tree = parse(xml_path)
         root = tree.getroot()
@@ -57,22 +71,8 @@ class RawMetrics:
 
 
     def _count_res(self, pred_bboxes, pred_labels, actual_bboxes, actual_labels, iou_thr):
-        cnt = {
-            "car": np.array([0, 0]), 
-            "bus": np.array([0, 0]), 
-            "hdv": np.array([0, 0]), 
-            "truck": np.array([0, 0]), 
-            "motorcycle":np.array([0, 0]), 
-            "bicycle": np.array([0, 0]), 
-            "personal_mobility":np.array([0, 0]), 
-            "firetruck":np.array([0, 0]), 
-            "police":np.array([0, 0]), 
-            "ambulance":np.array([0, 0]), 
-            "pedestrian":np.array([0, 0])
-        }
-
         if len(pred_labels) == 0 or len(actual_labels) == 0:
-            return cnt
+            return self.cnts
 
         for i, pred_bbox in enumerate(pred_bboxes):
             for j, actual_bbox in enumerate(actual_bboxes):
@@ -80,13 +80,13 @@ class RawMetrics:
 
                 if iou > iou_thr:
                     if pred_labels[i] == actual_labels[j]:
-                        cnt[pred_labels[i]][1] += 1
+                        self.cnts[pred_labels[i]][1] += 1
                     else:
-                        cnt[pred_labels[i]][0] += 1
+                        self.cnts[pred_labels[i]][0] += 1
                 else:
                     continue
 
-        return cnt
+        return self.cnts
 
 
     def _calc_iou(self, box1, box2):
@@ -162,44 +162,20 @@ class RawMetrics:
         score_thr=0.4, 
         iou_thr=0.5
     ):
-        with open(self.testset_txt_path) as f:
-            lines = f.read().splitlines()
-
-        cnts = {
-            "car": np.array([0, 0]), 
-            "bus": np.array([0, 0]), 
-            "hdv": np.array([0, 0]), 
-            "truck": np.array([0, 0]), 
-            "motorcycle":np.array([0, 0]), 
-            "bicycle": np.array([0, 0]), 
-            "personal_mobility":np.array([0, 0]), 
-            "firetruck":np.array([0, 0]), 
-            "police":np.array([0, 0]), 
-            "ambulance":np.array([0, 0]), 
-            "pedestrian":np.array([0, 0])
-        }
-
-        for line in tqdm(lines):
-            if len(labels) == 0:
-                continue
-                
-            actual_labels, actual_bboxes = self._get_actual_bboxes(xml_path=f"{self.annotation_dir}/{line}.xml")
+        actual_labels, actual_bboxes = self._get_actual_bboxes(xml_path=f"{self.annotation_dir}/{file_name}.xml")
             
-            cnt = self._count_res(
-                pred_bboxes=points, 
-                pred_labels=labels,
-                actual_bboxes=actual_bboxes, 
-                actual_labels=actual_labels,
-                iou_thr=iou_thr,
-            )
-
-            for cls in cnt.keys():
-                cnts[cls] += cnt[cls]
+        cnts = self._count_res(
+            pred_bboxes=pred_bboxes, 
+            pred_labels=pred_labels,
+            actual_bboxes=actual_bboxes, 
+            actual_labels=actual_labels,
+            iou_thr=iou_thr,
+        )
         
         metrics = {}
         for cls in cnt.keys():
-            fp = cnts[cls][0]
-            tp = cnts[cls][1]
+            fp = self.cnts[cls][0]
+            tp = self.cnts[cls][1]
             fn = self.npos[cls] - tp
             
             metrics[f"{cls}_FP"] = fp
