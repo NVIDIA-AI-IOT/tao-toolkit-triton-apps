@@ -382,12 +382,13 @@ python tao_client.py \
        --async \
        --output_path /path/to/the/output/directory
 ```
+The inferenced results are saved under the output path.
 The test dataset can be downloaded from [here](https://drive.google.com/file/d/1GhSt53-7MlFfauEZ2YkuzOaZVNIGo_c-/view?usp=sharing).
-To generate the pose sequences from an input video, first process the video using the [3d-bodypose-deepstream](https://gitlab-master.nvidia.com/amkale/3d-bodypose-deepstream) app, and then convert the 3D pose metadata into arrays for inference using the preprocessing script [here](https://gitlab-master.nvidia.com/tlt/tlt-pytorch/-/blob/main/cv/pose_classification/scripts/preprocess.py). The command line would be as follows:
+To generate the pose sequences from an input video, first process the video using the [deepstream-bodypose-3d](https://github.com/NVIDIA-AI-IOT/deepstream_reference_apps/tree/master/deepstream-bodypose-3d) app, and then convert the 3D pose metadata into arrays for inference using the entrypoint for dataset conversion. The command line would be as follows:
 ```python
-python cv/pose_classification/entrypoint/pose_classification.py \
-       preprocess \
-       -r /path/to/the/output/directory \
-       -e cv/pose_classification/experiment_specs/preprocess_nvidia.yaml
+tao pose_classification dataset_convert \
+                   -e /path/to/dataset_convert_nvidia.yaml \
+                   -k <encryption_key> \
+                   data=/absolute/path/to/your/json/pose/data \
+                   output_dir=/path/to/the/output/directory
 ```
-The inferenced results are generated in the `/path/to/the/output/directory/result.txt`.
