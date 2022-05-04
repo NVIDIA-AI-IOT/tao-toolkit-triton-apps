@@ -47,6 +47,7 @@ from tao_triton.python.postprocessing.retinanet_postprocessor import RetinanetPo
 from tao_triton.python.postprocessing.multitask_classification_postprocessor import MultitaskClassificationPostprocessor
 from tao_triton.python.postprocessing.pose_classification_postprocessor import PoseClassificationPostprocessor
 from tao_triton.python.utils.kitti import write_kitti_annotation
+from tao_triton.python.utils.pose_cls_dataset_convert import pose_cls_dataset_convert
 from tao_triton.python.model.detectnet_model import DetectnetModel
 from tao_triton.python.model.classification_model import ClassificationModel
 from tao_triton.python.model.lprnet_model import LPRModel
@@ -193,7 +194,12 @@ def parse_command_line(args=None):
                         type=str,
                         nargs='?',
                         default=None,
-                        help='Input image / Input folder / Input pose sequences.')
+                        help='Input image / Input folder / Input JSON / Input pose sequences.')
+    parser.add_argument('--track_id',
+                        type=int,
+                        required=False,
+                        default=-1,
+                        help='Track ID in the input JSON for Pose Classification.')
     parser.add_argument('--class_list',
                         type=str,
                         default="person,bag,face",
@@ -208,6 +214,10 @@ def parse_command_line(args=None):
                         type=str,
                         default="",
                         help="Path to the DetectNet_v2 clustering config.")
+    parser.add_argument("--dataset_convert_config",
+                        type=str,
+                        default="",
+                        help="Path to the Pose Classification dataset conversion config.")
     return parser.parse_args()
 
 
@@ -270,8 +280,19 @@ def main():
     max_batch_size = triton_model.max_batch_size
     pose_sequences = None
     frames = []
+    # The input is a JSON file of pose metadata.
+    if os.path.splitext(FLAGS.image_filename)[-1] == ".json":
+        assert FLAGS.track_id >= 0, (
+            "Track ID must be configured and not negative."
+        )
+        assert os.path.isfile(FLAGS.dataset_convert_config), (
+            "Dataset conversion config must be defined for Pose Classification."
+        )
+        pose_sequences = pose_cls_dataset_convert(FLAGS.image_filename,
+                                                  FLAGS.track_id,
+                                                  FLAGS.dataset_convert_config)
     # The input is a series of pose sequences.
-    if os.path.splitext(FLAGS.image_filename)[-1] == ".npy":
+    elif os.path.splitext(FLAGS.image_filename)[-1] == ".npy":
         pose_sequences = np.load(file=FLAGS.image_filename)
     else:
         target_shape = (triton_model.c, triton_model.h, triton_model.w)

@@ -1,5 +1,9 @@
 FROM nvcr.io/nvidia/tritonserver:22.02-py3
 
+# Fetch keys
+RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub
+RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/7fa2af80.pub
+
 # Replace libnvinfer_plugin.so since some TRT plugins are not supported in TRT8. 
 # The peoplesegnet needs MultilevelCropAndResize. The retinanet needs BatchTilePlugin.
 RUN wget https://nvidia.box.com/shared/static/7u2ocnwenwgrsx1yq8vv4hkfr0dg1rtm -O \

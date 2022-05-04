@@ -369,7 +369,7 @@ The test dataset can be downloaded from https://www.kaggle.com/paramaggarwal/fas
 Before logining, you will need a Kaggle account. 
 The inferenced results are generated in the `/path/to/the/output/directory/result.txt`.
 
-9. For running Pose_classification model, the command line would be as follows:
+9. For running Pose_classification model, if the input is a formatted Numpy array, the command line would be as follows:
 ```sh
 python tao_client.py \
        /path/to/a/file/of/pose/sequences \
@@ -382,13 +382,20 @@ python tao_client.py \
        --async \
        --output_path /path/to/the/output/directory
 ```
-The inferenced results are saved under the output path.
-The test dataset can be downloaded from [here](https://drive.google.com/file/d/1GhSt53-7MlFfauEZ2YkuzOaZVNIGo_c-/view?usp=sharing).
-To generate the pose sequences from an input video, first process the video using the [deepstream-bodypose-3d](https://github.com/NVIDIA-AI-IOT/deepstream_reference_apps/tree/master/deepstream-bodypose-3d) app, and then convert the 3D pose metadata into arrays for inference using the entrypoint for dataset conversion. The command line would be as follows:
-```python
-tao pose_classification dataset_convert \
-                   -e /path/to/dataset_convert_nvidia.yaml \
-                   -k <encryption_key> \
-                   data=/absolute/path/to/your/json/pose/data \
-                   output_dir=/path/to/the/output/directory
+The input can also be a JSON file generated from the [deepstream-bodypose-3d](https://github.com/NVIDIA-AI-IOT/deepstream_reference_apps/tree/master/deepstream-bodypose-3d) app, and the command line would be as follows:
+```sh
+python tao_client.py \
+       /path/to/a/json/file/of/pose/metadata \
+       --track_id <track_id> \
+       --dataset_convert_config /path/to/a/yaml/file/of/dataset/convert/config \
+       -m pose_classification_tao \
+       -x 1 \
+       -b 1 \
+       --mode Pose_classification \
+       -i https \
+       -u localhost:8000 \
+       --async \
+       --output_path /path/to/the/output/directory
 ```
+The test dataset can be downloaded from [here](https://drive.google.com/file/d/1GhSt53-7MlFfauEZ2YkuzOaZVNIGo_c-/view?usp=sharing).
+The inferenced results are generated in the `/path/to/the/output/directory/results.txt`.

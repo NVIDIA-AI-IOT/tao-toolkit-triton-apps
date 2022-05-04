@@ -23,6 +23,7 @@
 - [Pose_classification](#pose_classification)
   - [Configuring the Pose_classification model entry in the model repository](#configuring-the-pose_classification-model-entry-in-the-model-repository)
   - [Configuring the Pose_classification model Post-processor](#configuring-the-pose_classification-model-post-processor)
+  - [Configuring the Pose_classification data converter](#configuring-the-pose_classification-data-converter)
 
 The inference client samples provided in this provide several parameters that the user can configure.
 This section elaborates about those parameters in more detail.
@@ -693,10 +694,11 @@ Refer to `model_repository/multitask_classification_tao` folder.
 
 ## Pose_classification
 
-The Pose_classification inference sample has 2 component that can be configured
+The Pose_classification inference sample has 3 components that can be configured
 
-1. [Model Repository](#pose_classification-model-repository)
+1. [Model Repository](#configuring-the-pose_classification-model-entry-in-the-model-repository)
 2. [Configuring the Pose_classification model Post-processor](#configuring-the-pose_classification-model-post-processor)
+3. [Configuring the Pose_classification data converter](#configuring-the-pose_classification-data-converter)
 
 ### Configuring the Pose_classification model entry in the model repository
 
@@ -756,3 +758,35 @@ that is being served. As seen in the sample, a Pose_classification model has 1 i
 ### Configuring the Pose_classification model Post-processor
 
 Refer to `model_repository/pose_classification_tao` folder. 
+
+### Configuring the Pose_classification data converter
+
+When the input is a JSON file generated from the [deepstream-bodypose-3d](https://github.com/NVIDIA-AI-IOT/deepstream_reference_apps/tree/master/deepstream-bodypose-3d) app, it needs to be converted into skeleton sequences to be consumed by the Pose_classification model.
+
+A sample [configuration file](/tao_triton/python/dataset_convert_specs/dataset_convert_config_pose_classification.yaml) to configure the dataset converter of Pose Classification looks as shown below
+
+```yaml
+pose_type: "3dbp"
+num_joints: 34
+frame_width: 1920
+frame_height: 1080
+focal_length: 1200.0
+sequence_length_max: 300
+sequence_length_min: 10
+sequence_length: 100
+sequence_overlap: 0.5
+```
+
+The following table explains the configurable parameters of the dataset converter.
+
+| **Parameter Name** | **Description** | **Type**  | **Supported Values**| **Sample Values**|
+| :----              | :-------------- | :-------: | :------------------ | :--------------- |
+| pose_type | The type of body pose | string | 3dbp, 25dbp, or 2dbp | 3dbp|
+| num_joints | The total number of joints in the skeleton graph layout | int |  | 34 |
+| frame_width | The width of the video frame in pixel | int |  | 1920 |
+| frame_height | The height of the video frame in pixel | int |  | 1080 |
+| focal_length | The focal length that the video was captured in | float |  | 1200.0 |
+| sequence_length_max | The maximum sequence length in frame | int |  | 300 |
+| sequence_length_min | The minimum sequence length in frame | int |  | 10 |
+| sequence_length | The sequence length for sampling sequences | int |  | 100 |
+| sequence_overlap | The overlap between sequences during samping | float |  | 0.5 |

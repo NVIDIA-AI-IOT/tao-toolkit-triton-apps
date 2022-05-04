@@ -51,6 +51,6 @@ ngc_yolov3="https://nvidia.box.com/shared/static/3a00fdf8e1s2k3nezoxmfyykydxiyxy
 ngc_peoplesegnet="https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplesegnet/versions/deployable_v2.0/zip"
 ngc_retinanet="https://nvidia.box.com/shared/static/3a00fdf8e1s2k3nezoxmfyykydxiyxy7"
 ngc_mcls_classification="https://docs.google.com/uc?export=download&id=1blJQDQSlLPU6zX3yRmXODRwkcss6B3a3"
-ngc_pcls_classification="https://drive.google.com/uc?export=download&id=1_70c2IUW8q6MT5PBjApJogXNuoxt9VAB"
+ngc_pose_classification="https://drive.google.com/uc?export=download&id=1_70c2IUW8q6MT5PBjApJogXNuoxt9VAB"
 
 default_model_download_path="${tao_triton_root}/tao_models"
