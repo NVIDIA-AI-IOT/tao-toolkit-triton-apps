@@ -94,7 +94,7 @@ class DetectNetPostprocessor(Postprocessor):
         for class_name in self.classes:
             if class_name not in classwise_clustering_config.keys():
                 raise KeyError("Cannot find class name {} in {}".format(
-                    class_name, self.pproc_config.keys()
+                    class_name, classwise_clustering_config.keys()
                 ))
             self.dbscan_elements[class_name] = dbscan(
                 eps=classwise_clustering_config[class_name].dbscan_config.dbscan_eps,

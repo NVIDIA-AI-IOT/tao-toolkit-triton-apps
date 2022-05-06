@@ -232,6 +232,7 @@ For example,
         -x 1 \
         -b 8 \
         --mode DetectNet_v2 \
+        --class_list person,bag,face \
         -i https \
         -u localhost:8000 \
         --async \
@@ -245,6 +246,7 @@ For example,
   python tao_client.py \
         /path/to/a/directory/of/images \
         -m dashcamnet_tao \
+        --class_list car,bicycle,person,road_sign \
         -x 1 \
         -b 8 \
         --mode DetectNet_v2 \
