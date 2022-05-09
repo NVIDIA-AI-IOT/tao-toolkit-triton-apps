@@ -26,6 +26,7 @@ import logging
 import os
 import sys
 
+import json
 from attrdict import AttrDict
 import numpy as np
 from PIL import Image
@@ -195,11 +196,6 @@ def parse_command_line(args=None):
                         nargs='?',
                         default=None,
                         help='Input image / Input folder / Input JSON / Input pose sequences.')
-    parser.add_argument('--track_id',
-                        type=int,
-                        required=False,
-                        default=-1,
-                        help='Track ID in the input JSON for Pose Classification.')
     parser.add_argument('--class_list',
                         type=str,
                         default="person,bag,face",
@@ -282,15 +278,10 @@ def main():
     frames = []
     # The input is a JSON file of pose metadata.
     if os.path.splitext(FLAGS.image_filename)[-1] == ".json":
-        assert FLAGS.track_id >= 0, (
-            "Track ID must be configured and not negative."
-        )
-        assert os.path.isfile(FLAGS.dataset_convert_config), (
-            "Dataset conversion config must be defined for Pose Classification."
-        )
-        pose_sequences = pose_cls_dataset_convert(FLAGS.image_filename,
-                                                  FLAGS.track_id,
-                                                  FLAGS.dataset_convert_config)
+        if not os.path.isfile(FLAGS.dataset_convert_config):
+            raise FileNotFoundError("Dataset conversion config must be defined for Pose Classification.")
+        pose_sequences, action_data = pose_cls_dataset_convert(FLAGS.image_filename,
+                                                               FLAGS.dataset_convert_config)
     # The input is a series of pose sequences.
     elif os.path.splitext(FLAGS.image_filename)[-1] == ".npy":
         pose_sequences = np.load(file=FLAGS.image_filename)
@@ -487,11 +478,26 @@ def main():
                 this_id = response.get_response().id
             else:
                 this_id = response.get_response()["id"]
-            postprocessor.apply(
-                response, this_id, render=True
-            )
+            if os.path.splitext(FLAGS.image_filename)[-1] == ".json":
+                postprocessor.apply(
+                    response, this_id, render=True, action_data=action_data
+                )
+            else:
+                postprocessor.apply(
+                    response, this_id, render=True
+                )
             processed_request += 1
             pbar.update(FLAGS.batch_size)
+
+    if os.path.splitext(FLAGS.image_filename)[-1] == ".json":
+        output_file = os.path.join(FLAGS.output_path, "results.json")
+        for b in range(len(action_data)):
+            for f in range(len(action_data[b]["batches"])):
+                for p in range(len(action_data[b]["batches"][f]["objects"])):
+                    action_data[b]["batches"][f]["objects"][p].pop("segment_id", None)
+        with open(output_file, 'w') as f:
+            json.dump(action_data, f, sort_keys=True, indent=2, ensure_ascii=False)
+        
     logger.info("PASS")
 
 if __name__ == '__main__':

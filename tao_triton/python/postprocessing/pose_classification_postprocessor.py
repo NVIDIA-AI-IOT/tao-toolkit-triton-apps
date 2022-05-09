@@ -43,7 +43,7 @@ class PoseClassificationPostprocessor(Postprocessor):
         self.output_path = output_path
         self.output_name = "fc_pred"
 
-    def apply(self, output_tensors, this_id, render=True, batching=True):
+    def apply(self, output_tensors, this_id, render=True, batching=True, action_data=[]):
         """Apply the post processor to the outputs to the poseclassification outputs."""
         output_array = output_tensors.as_numpy(self.output_name)
         if len(output_array) != self.batch_size:
@@ -53,25 +53,50 @@ class PoseClassificationPostprocessor(Postprocessor):
         # Include special handling for non-batching models
         if not os.path.exists(self.output_path):
             os.makedirs(self.output_path)
-        output_file = os.path.join(self.output_path, "results.txt")
-        with open(output_file, "a") as wfile:
+
+        # Output a JSON file
+        if len(action_data) > 0:
             for idx in range(self.batch_size):
                 results = output_array[idx]
                 current_idx = (int(this_id) - 1) * self.batch_size + idx
                 if current_idx < len(self.sequences):
-                    wfile.write("{}".format(current_idx))
-                    if not batching:
-                        results = [results]
-                    for result in results:
-                        if output_array.dtype.type == np.object_:
-                            cls = "".join(chr(x) for x in result).split(':')
-                        else:
-                            cls = result.split(':')
-                        wfile.write(
-                            ", {:0.4f}({})={}".format(
-                                float(cls[0]), cls[1], cls[2]
+                    for b in range(len(action_data)):
+                        for f in range(len(action_data[b]["batches"])):
+                            frame_num = action_data[b]["batches"][f]["frame_num"]
+                            for p in range(len(action_data[b]["batches"][f]["objects"])):
+                                object_id = action_data[b]["batches"][f]["objects"][p]["object_id"]
+                                segment_id = action_data[b]["batches"][f]["objects"][p]["segment_id"]
+                                if segment_id == current_idx:
+                                    if not batching:
+                                        results = [results]
+                                    result = results[0]
+                                    if output_array.dtype.type == np.object_:
+                                        cls = "".join(chr(x) for x in result).split(':')
+                                    else:
+                                        cls = result.split(':')
+                                    action_data[b]["batches"][f]["objects"][p]["action"] = cls[2]
+
+        # Output a text file of results
+        else:
+            output_file = os.path.join(self.output_path, "results.txt")
+            with open(output_file, "a") as wfile:
+                for idx in range(self.batch_size):
+                    results = output_array[idx]
+                    current_idx = (int(this_id) - 1) * self.batch_size + idx
+                    if current_idx < len(self.sequences):
+                        wfile.write("{}".format(current_idx))
+                        if not batching:
+                            results = [results]
+                        for result in results:
+                            if output_array.dtype.type == np.object_:
+                                cls = "".join(chr(x) for x in result).split(':')
+                            else:
+                                cls = result.split(':')
+                            wfile.write(
+                                ", {:0.4f}({})={}".format(
+                                    float(cls[0]), cls[1], cls[2]
+                                )
                             )
-                        )
-                    wfile.write("\n")
-                else:
-                    break
+                        wfile.write("\n")
+                    else:
+                        break

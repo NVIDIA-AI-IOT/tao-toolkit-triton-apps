@@ -384,11 +384,13 @@ python tao_client.py \
        --async \
        --output_path /path/to/the/output/directory
 ```
-The input can also be a JSON file generated from the [deepstream-bodypose-3d](https://github.com/NVIDIA-AI-IOT/deepstream_reference_apps/tree/master/deepstream-bodypose-3d) app, and the command line would be as follows:
+The test dataset can be downloaded from [here](https://drive.google.com/file/d/1GhSt53-7MlFfauEZ2YkuzOaZVNIGo_c-/view?usp=sharing).
+The inferenced results are generated in the `/path/to/the/output/directory/results.txt`.
+
+The input can also be a JSON file generated from the [`deepstream-bodypose-3d`](https://github.com/NVIDIA-AI-IOT/deepstream_reference_apps/tree/master/deepstream-bodypose-3d) app, and the command line would be as follows:
 ```sh
 python tao_client.py \
        /path/to/a/json/file/of/pose/metadata \
-       --track_id <track_id> \
        --dataset_convert_config /path/to/a/yaml/file/of/dataset/convert/config \
        -m pose_classification_tao \
        -x 1 \
@@ -399,5 +401,16 @@ python tao_client.py \
        --async \
        --output_path /path/to/the/output/directory
 ```
-The test dataset can be downloaded from [here](https://drive.google.com/file/d/1GhSt53-7MlFfauEZ2YkuzOaZVNIGo_c-/view?usp=sharing).
-The inferenced results are generated in the `/path/to/the/output/directory/results.txt`.
+The inferenced results are generated in the `/path/to/the/output/directory/results.json`, which follow the same format as the JSON metadata from `deepstream-bodypose-3d` and add predicted `"action"` to each object at each frame. 
+
+To run end-to-end inference, run the following quick start script to start the server (only the Pose Classification model will be downloaded and converted):
+
+ ```sh
+ bash scripts/pose_cls_e2e_inference/start_server.sh
+ ```
+
+ Then run the following script for body pose estimation from DeepStream and sending an inference request to the server:
+
+ ```sh
+ bash scripts/pose_cls_e2e_inference/start_client.sh
+ ```

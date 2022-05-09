@@ -5,11 +5,11 @@ import yaml
 import numpy as np
 
 
-def _create_data_numpy(data_numpy, pose_sequence, frame_start, frame_end, pose_type, num_joints, sequence_length_max):
+def _create_data_array(data_array, pose_sequence, frame_start, frame_end, pose_type, num_joints, sequence_length_max):
     """Create a NumPy array for output.
     
     # Arguments
-        data_numpy (np.array): Initial Numpy array.
+        data_array (np.array): Initial Numpy array.
         pose_sequence (list): List of pose sequence.
         frame_start (int): Starting frame index.
         frame_end (int): Ending frame index.
@@ -30,23 +30,22 @@ def _create_data_numpy(data_numpy, pose_sequence, frame_start, frame_end, pose_t
             for d in range(joint_dim):
                 sequence[0, d, f, j, 0] = pose_sequence[frame][j][d]
         f += 1
-    if data_numpy is None:
-        data_numpy = sequence
+    if data_array is None:
+        data_array = sequence
     else:
-        data_numpy = np.concatenate((data_numpy, sequence), axis=0)
-    return data_numpy
+        data_array = np.concatenate((data_array, sequence), axis=0)
+    return data_array
 
 
-def pose_cls_dataset_convert(pose_data_file, track_id, dataset_convert_config):
+def pose_cls_dataset_convert(pose_data_file, dataset_convert_config):
     """Extract sequences from pose data and apply normalization.
     
     # Arguments
         pose_data_file (str): Path to JSON pose data.
-        track_id (int): Track ID to extract the pose sequences.
         dataset_convert_config (str): Path to the YAML config for dataset conversion.
 
     # Returns
-        Numpy array of pose sequences.
+        Numpy array of pose sequences and pose data with placeholder for action.
     """
     with open(pose_data_file, 'r') as f:
         pose_data = json.load(f)
@@ -60,15 +59,18 @@ def pose_cls_dataset_convert(pose_data_file, track_id, dataset_convert_config):
     frame_width = float(dc_config["frame_width"])
     frame_height = float(dc_config["frame_height"])
     focal_length = dc_config["focal_length"]
-    pose_sequence = []
+    pose_sequences = {}
+    frame_data = {}
     for batch in pose_data:
         assert batch["num_frames_in_batch"] == len(batch["batches"]), f"batch[\"num_frames_in_batch\"] "\
             f"{batch['num_frames_in_batch']} does not match len(batch[\"batches\"]) {len(batch['batches'])}."
         for frame in batch["batches"]:
             for person in frame["objects"]:
                 object_id = person["object_id"]
-                if object_id != track_id:
-                    continue
+                if object_id not in pose_sequences:
+                    pose_sequences[object_id] = []
+                    frame_data[object_id] = []
+
                 poses = []
                 if pose_type == "3dbp":
                     if "pose3d" not in list(person.keys()):
@@ -106,7 +108,9 @@ def pose_cls_dataset_convert(pose_data_file, track_id, dataset_convert_config):
                             poses.append([x, y])
                 else:
                     raise NotImplementedError(f"Pose type {pose_type} is not supported.")
-                pose_sequence.append(poses)
+
+                pose_sequences[object_id].append(poses)
+                frame_data[object_id].append(frame["frame_num"])
 
     # Create output data array
     sequence_length_max = dc_config["sequence_length_max"]
@@ -114,18 +118,43 @@ def pose_cls_dataset_convert(pose_data_file, track_id, dataset_convert_config):
     sequence_length = dc_config["sequence_length"]
     sequence_overlap = dc_config["sequence_overlap"]
     step = int(sequence_length * sequence_overlap)
-    data_numpy = None
-    frame_start = 0
-    sequence_count = 0
-    while len(pose_sequence) - frame_start >= sequence_length_min:
-        frame_end = frame_start + sequence_length
-        if len(pose_sequence) - frame_start < sequence_length:
-            frame_end = len(pose_sequence)
-        data_numpy = _create_data_numpy(data_numpy, pose_sequence, frame_start, frame_end,
-                                        pose_type, num_joints, sequence_length_max)
-        frame_start += step
-        sequence_count += 1
-    if sequence_count > 0:
-        return data_numpy
-    else:
-        raise ValueError(f"The given track ID {track_id} does not exist or does not have enough pose data.")
+    data_arrays = []
+    segment_assignments = {}
+    segment_id_sum = 0
+
+    for object_id in pose_sequences.keys():
+        # Create segments of data arrays
+        data_array = None
+        frame_start = 0
+        frame_centers = []
+        while len(pose_sequences[object_id]) - frame_start >= sequence_length_min:
+            frame_end = frame_start + sequence_length
+            if len(pose_sequences[object_id]) - frame_start < sequence_length:
+                frame_end = len(pose_sequences[object_id])
+            data_array = _create_data_array(data_array, pose_sequences[object_id], frame_start, frame_end,
+                                            pose_type, num_joints, sequence_length_max)
+            frame_centers.append(int(sum(frame_data[object_id][frame_start:frame_end]) / (frame_end - frame_start)))
+            frame_start += step
+
+        # Assign segment indices to frames
+        frame_centers = np.asarray(frame_centers)
+        for i in range(len(frame_data[object_id])):
+            segment_id = int((np.abs(frame_centers - frame_data[object_id][i])).argmin())
+            segment_assignments[(frame_data[object_id][i], object_id)] = segment_id + segment_id_sum
+
+        # Accumulate data arrays and segment IDs of all objects
+        data_arrays.append(data_array)
+        segment_id_sum += len(frame_centers)
+
+    # Update pose data for returning (removing pose metadata)
+    for b in range(len(pose_data)):
+        for f in range(len(pose_data[b]["batches"])):
+            pose_data[b]["batches"][f].pop("num_obj_meta", None)
+            frame_num = pose_data[b]["batches"][f]["frame_num"]
+            for p in range(len(pose_data[b]["batches"][f]["objects"])):
+                object_id = pose_data[b]["batches"][f]["objects"][p]["object_id"]
+                pose_data[b]["batches"][f]["objects"][p]["segment_id"] = \
+                    segment_assignments.get((frame_num, object_id), -1)
+                pose_data[b]["batches"][f]["objects"][p]["action"] = ""
+
+    return np.concatenate(data_arrays, axis=0), pose_data
