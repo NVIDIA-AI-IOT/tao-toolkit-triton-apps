@@ -26,8 +26,8 @@ import numpy as np
 
 from tao_triton.python.postprocessing.postprocessor import Postprocessor
 
-    
-characters_list_file = "model_repository/lprnet_tao/characters_list.txt"
+repo_root = os.getenv("TAO_TRITON_REPO_ROOT", "")
+characters_list_file = os.path.join(repo_root, "model_repository/lprnet_tao/characters_list.txt")
 
 def get_classes_id():
     with open(characters_list_file, "r") as f:
