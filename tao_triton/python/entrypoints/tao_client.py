@@ -276,15 +276,18 @@ def main():
     max_batch_size = triton_model.max_batch_size
     pose_sequences = None
     frames = []
-    # The input is a JSON file of pose metadata.
-    if os.path.splitext(FLAGS.image_filename)[-1] == ".json":
-        if not os.path.isfile(FLAGS.dataset_convert_config):
-            raise FileNotFoundError("Dataset conversion config must be defined for Pose Classification.")
-        pose_sequences, action_data = pose_cls_dataset_convert(FLAGS.image_filename,
-                                                               FLAGS.dataset_convert_config)
-    # The input is a series of pose sequences.
-    elif os.path.splitext(FLAGS.image_filename)[-1] == ".npy":
-        pose_sequences = np.load(file=FLAGS.image_filename)
+    if FLAGS.mode.lower() == "pose_classification":
+        # The input is a JSON file of pose metadata.
+        if os.path.splitext(FLAGS.image_filename)[-1] == ".json":
+            if not os.path.isfile(FLAGS.dataset_convert_config):
+                raise FileNotFoundError("Dataset conversion config must be defined for Pose Classification.")
+            pose_sequences, action_data = pose_cls_dataset_convert(FLAGS.image_filename,
+                                                                FLAGS.dataset_convert_config)
+        # The input is a NumPy array of pose sequences.
+        elif os.path.splitext(FLAGS.image_filename)[-1] == ".npy":
+            pose_sequences = np.load(file=FLAGS.image_filename)
+        else:
+            raise NotImplementedError("The input for Pose Classification has to be a JSON file or a NumPy array.")
     else:
         target_shape = (triton_model.c, triton_model.h, triton_model.w)
         npdtype = triton_to_np_dtype(triton_model.triton_dtype)

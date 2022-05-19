@@ -57,8 +57,8 @@ fi
 source $config_path
 
 # Clone DeepStream repo
-git clone https://github.com/NVIDIA-AI-IOT/deepstream_reference_apps.git ${tao_triton_root}/deepstream_reference_apps
-# git clone https://github.com/xunleiw/deepstream_reference_apps.git ${tao_triton_root}/deepstream_reference_apps
+# git clone https://github.com/NVIDIA-AI-IOT/deepstream_reference_apps.git ${tao_triton_root}/deepstream_reference_apps
+git clone https://github.com/xunleiw/deepstream_reference_apps.git ${tao_triton_root}/deepstream_reference_apps
 export BODYPOSE3D_HOME=${tao_triton_root}/deepstream_reference_apps/deepstream-bodypose-3d
 
 # Download models using NGC
@@ -111,6 +111,9 @@ python -m tao_triton.python.entrypoints.tao_client $BODYPOSE3D_HOME/streams/body
        -u localhost:8000 \
        --async \
        --output_path ${tao_triton_root}
+
+# Plot inference results
+python ./scripts/pose_cls_e2e_inference/plot_e2e_inference.py ./results.json $BODYPOSE3D_HOME/streams/bodypose.mp4 ./results.mp4
 
 # Clean repo
 rm -r ${tao_triton_root}/deepstream_reference_apps
