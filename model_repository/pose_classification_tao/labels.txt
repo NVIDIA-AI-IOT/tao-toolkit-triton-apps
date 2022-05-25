@@ -1,6 +1,6 @@
-sit_down
-stand_up
-sit
-stand
-walk
-jump
+sitting_down
+getting_up
+sitting
+standing
+walking
+jumping

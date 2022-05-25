@@ -120,31 +120,26 @@ def pose_cls_dataset_convert(pose_data_file, dataset_convert_config):
     step = int(sequence_length * sequence_overlap)
     data_arrays = []
     segment_assignments = {}
-    segment_id_sum = 0
+    segment_id = 0
 
     for object_id in pose_sequences.keys():
         # Create segments of data arrays
         data_array = None
         frame_start = 0
-        frame_centers = []
         while len(pose_sequences[object_id]) - frame_start >= sequence_length_min:
             frame_end = frame_start + sequence_length
             if len(pose_sequences[object_id]) - frame_start < sequence_length:
                 frame_end = len(pose_sequences[object_id])
             data_array = _create_data_array(data_array, pose_sequences[object_id], frame_start, frame_end,
                                             pose_type, num_joints, sequence_length_max)
-            frame_centers.append(int(sum(frame_data[object_id][frame_start:frame_end]) / (frame_end - frame_start)))
+            if frame_end - frame_start > step:
+                for i in range(frame_start + step, frame_end):
+                    segment_assignments[(object_id, frame_data[object_id][i])] = segment_id
+            segment_id += 1
             frame_start += step
 
-        # Assign segment indices to frames
-        frame_centers = np.asarray(frame_centers)
-        for i in range(len(frame_data[object_id])):
-            segment_id = int((np.abs(frame_centers - frame_data[object_id][i])).argmin())
-            segment_assignments[(frame_data[object_id][i], object_id)] = segment_id + segment_id_sum
-
-        # Accumulate data arrays and segment IDs of all objects
+        # Accumulate data arrays of all objects
         data_arrays.append(data_array)
-        segment_id_sum += len(frame_centers)
 
     # Update pose data for returning (removing pose metadata)
     for b in range(len(pose_data)):
@@ -154,7 +149,7 @@ def pose_cls_dataset_convert(pose_data_file, dataset_convert_config):
             for p in range(len(pose_data[b]["batches"][f]["objects"])):
                 object_id = pose_data[b]["batches"][f]["objects"][p]["object_id"]
                 pose_data[b]["batches"][f]["objects"][p]["segment_id"] = \
-                    segment_assignments.get((frame_num, object_id), -1)
+                    segment_assignments.get((object_id, frame_num), -1)
                 pose_data[b]["batches"][f]["objects"][p]["action"] = ""
 
     return np.concatenate(data_arrays, axis=0), pose_data

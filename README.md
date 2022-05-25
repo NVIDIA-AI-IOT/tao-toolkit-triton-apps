@@ -403,7 +403,13 @@ python tao_client.py \
 ```
 The inferenced results are generated in the `/path/to/the/output/directory/results.json`, which follow the same format as the JSON metadata from `deepstream-bodypose-3d` and add predicted `"action"` to each object at each frame. 
 
-To run end-to-end inference, run the following quick start script to start the server (only the Pose Classification model will be downloaded and converted):
+Note that the frame sequence of each object is broken into skeleton segments by a dataset converter (see the figure below). The `sequence_length` and `sequence_overlap` are configurable in [`dataset_convert_config_pose_classification.yaml`](/tao_triton/python/dataset_convert_specs/dataset_convert_config_pose_classification.yaml). The output labels are assigned to frames after certain period of time.
+
+<div align="center">
+  <img src = "/images/pose_cls_e2e_inference.png", width="960">
+</div>
+
+To perform end-to-end inference, run the following quick start script to start the server (only the Pose Classification model will be downloaded and converted):
 
  ```sh
  bash scripts/pose_cls_e2e_inference/start_server.sh

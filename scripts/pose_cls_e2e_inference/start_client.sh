@@ -91,17 +91,17 @@ cd $BODYPOSE3D_HOME/sources
 make
 
 # Run 3D body pose
-./deepstream-pose-estimation-app --input file://$BODYPOSE3D_HOME/streams/bodypose.mp4 \
-                                 --output $BODYPOSE3D_HOME/streams/bodypose_3dbp.mp4 \
-                                 --focal 800.0 \
-                                 --width 1280 \
-                                 --height 720 \
+./deepstream-pose-estimation-app --input file://${tao_triton_root}/scripts/pose_cls_e2e_inference/demo.mp4 \
+                                 --output ${tao_triton_root}/scripts/pose_cls_e2e_inference/demo_3dbp.mp4 \
+                                 --focal 1200.0 \
+                                 --width 1920 \
+                                 --height 1080 \
                                  --fps \
-                                 --save-pose $BODYPOSE3D_HOME/streams/bodypose_3dbp.json
+                                 --save-pose ${tao_triton_root}/scripts/pose_cls_e2e_inference/demo_3dbp.json
 
 # Run the Triton client
 cd ${tao_triton_root}
-python -m tao_triton.python.entrypoints.tao_client $BODYPOSE3D_HOME/streams/bodypose_3dbp.json \
+python -m tao_triton.python.entrypoints.tao_client ${tao_triton_root}/scripts/pose_cls_e2e_inference/demo_3dbp.json \
        --dataset_convert_config ${tao_triton_root}/tao_triton/python/dataset_convert_specs/dataset_convert_config_pose_classification.yaml \
        -m pose_classification_tao \
        -x 1 \
@@ -110,10 +110,12 @@ python -m tao_triton.python.entrypoints.tao_client $BODYPOSE3D_HOME/streams/body
        -i https \
        -u localhost:8000 \
        --async \
-       --output_path ${tao_triton_root}
+       --output_path ${tao_triton_root}/scripts/pose_cls_e2e_inference
 
 # Plot inference results
-python ./scripts/pose_cls_e2e_inference/plot_e2e_inference.py ./results.json $BODYPOSE3D_HOME/streams/bodypose.mp4 ./results.mp4
+python ./scripts/pose_cls_e2e_inference/plot_e2e_inference.py ./scripts/pose_cls_e2e_inference/results.json \
+       ./scripts/pose_cls_e2e_inference/demo.mp4 \
+       ./scripts/pose_cls_e2e_inference/results.mp4
 
 # Clean repo
 rm -r ${tao_triton_root}/deepstream_reference_apps
