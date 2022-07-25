@@ -351,6 +351,7 @@ The following table explains the parameters in the config.pbtxt
 The input and output elements in the config.pbtxt provide the configurable parameters for the input and output nodes of the model
 that is being served. As seen in the sample, a lprnet model has 1 input node `image_input` and 2 output node `tf_op_layer_ArgMax`
 and `tf_op_layer_Max`.
+The dims in output node should the 1/4 of the width in the dims of input node. For example, as above, 24 equals to 1/4 of 96.
 
 ### Configuring the LPRnet model Post-processor
 
