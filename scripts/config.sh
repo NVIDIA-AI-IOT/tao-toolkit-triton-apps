@@ -25,7 +25,7 @@ tao_triton_root=$PWD
 gpu_id=0
 cuda_ver=11.4
 tao_triton_server_docker="nvcr.io/nvidia/tao/triton-apps"
-tao_triton_server_tag="22.02-py3"
+tao_triton_server_tag="22.06-py3"
 
 # Load key for the models.
 tlt_key_peoplenet="tlt_encode"
