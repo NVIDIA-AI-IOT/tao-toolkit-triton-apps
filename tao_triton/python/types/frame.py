@@ -20,7 +20,6 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import os
-
 from PIL import Image
 import numpy as np
 
@@ -190,5 +189,22 @@ class Frame(object):
         img = Image.open(self._image_path)
         image = img.resize((self.w, self.h), Image.ANTIALIAS).convert('RGB')
         inference_input = preprocess_input(np.array(image).astype(np.float32).transpose(2, 0, 1))
+
+        return inference_input
+
+    def _load_img_re_identification(self):
+        """load an image and returns the original image and a numpy array for model to consume.
+
+        Args:
+            img_path (str): path to an image
+        Returns:
+            img (PIL.Image): PIL image of original image.
+            inference_input (array): numpy array for processed image
+        """
+
+        img = Image.open(self._image_path)
+        image = img.resize((self.w, self.h), Image.BILINEAR)
+        inference_input = preprocess_input(np.array(image).astype(np.float32).transpose(2, 0, 1),
+                                           mode="torch")
 
         return inference_input

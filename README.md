@@ -29,6 +29,10 @@
   - [Pose_classification](docs/configuring_the_client.md#pose_classification)
     - [Configuring the Pose_classification model entry in the model repository](docs/configuring_the_client.md#configuring-the-pose_classification-model-entry-in-the-model-repository)
     - [Configuring the Pose_classification model Post-processor](docs/configuring_the_client.md#configuring-the-pose_classification-model-post-processor)
+    - [Configuring the Pose_classification data converter](docs/configuring_the_client.md#configuring-the-pose_classification-data-converter)
+  - [Re_identification](docs/configuring_the_client.md#re_identification)
+    - [Configuring the Re_identification model entry in the model repository](docs/configuring_the_client.md#configuring-the-re_identification-model-entry-in-the-model-repository)
+    - [Configuring the Re_identification model Post-processor](docs/configuring_the_client.md#configuring-the-re_identification-model-post-processor)
 
 NVIDIA Train Adapt Optimize (TAO) Toolkit, provides users an easy interface to generate accurate and optimized models
 for computer vision and conversational AI use cases. These models are generally deployed via the DeepStream SDK or
@@ -45,7 +49,7 @@ we provide reference applications for 6 computer vision models and 1 character r
 - Retinanet
 - Multitask Classification
 - Pose Classification
-
+- Re-Identification
 Triton is an NVIDIA developed inference software solution to efficiently deploy Deep Neural Networks (DNN) developed
 across several frameworks, for example TensorRT, Tensorflow, and ONNXRuntime. Triton Inference Server runs multiple
 models from the same or different frameworks concurrently on a single GPU. In a multi-GPU server, it automatically
@@ -165,6 +169,7 @@ This sample walks through setting up instances of inferencing the following mode
 7. Retinanet
 8. Multitask_classification
 9. Pose_classification
+10. Re_identification
 
 Simply run the quick start script:
 
@@ -204,7 +209,7 @@ optional arguments:
                         Version of model. Default is to use latest version.
   -b BATCH_SIZE, --batch-size BATCH_SIZE
                         Batch size. Default is 1.
-  --mode {Classification, DetectNet_v2, LPRNet, YOLOv3, Peoplesegnet, Retinanet, Multitask_classification, Pose_classification}
+  --mode {Classification, DetectNet_v2, LPRNet, YOLOv3, Peoplesegnet, Retinanet, Multitask_classification, Pose_classification, Re_identification}
                         Type of network model. Default is NONE.
   -u URL, --url URL     Inference server URL. Default is localhost:8000.
   -i PROTOCOL, --protocol PROTOCOL
@@ -419,4 +424,33 @@ To perform end-to-end inference, run the following quick start script to start t
 
  ```sh
  bash scripts/pose_cls_e2e_inference/start_client.sh
+ ```
+
+10. For running Re_identification model, the command line would be as follows:
+```sh
+python tao_client.py \
+       /path/to/a/directory/of/query/images \
+       --test_dir /path/to/a/directory/of/test/images \
+       -m re_identification_tao \
+       -x 1 \
+       -b 16 \
+       --mode Re_identification \
+       -i https \
+       -u localhost:8000 \
+       --async \
+       --output_path /path/to/the/output/directory
+```
+The test dataset can be downloaded from [here](https://zheng-lab.cecs.anu.edu.au/Project/project_reid.html).
+The inferenced results are generated in the `/path/to/the/output/directory/results.json`.
+
+To perform end-to-end inference, run the following quick start script to start the server (only the Re-Identification model will be downloaded and converted):
+
+ ```sh
+ bash scripts/re_id_e2e_inference/start_server.sh
+ ```
+
+ Then run the following script for re-identification and sending an inference request to the server:
+
+ ```sh
+ bash scripts/re_id_e2e_inference/start_client.sh
  ```

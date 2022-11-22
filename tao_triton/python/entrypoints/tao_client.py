@@ -29,6 +29,7 @@ import sys
 import json
 from attrdict import AttrDict
 import numpy as np
+import re
 from PIL import Image
 from tqdm import tqdm
 
@@ -47,6 +48,7 @@ from tao_triton.python.postprocessing.peoplesegnet_postprocessor import Peoplese
 from tao_triton.python.postprocessing.retinanet_postprocessor import RetinanetPostprocessor
 from tao_triton.python.postprocessing.multitask_classification_postprocessor import MultitaskClassificationPostprocessor
 from tao_triton.python.postprocessing.pose_classification_postprocessor import PoseClassificationPostprocessor
+from tao_triton.python.postprocessing.re_identification_postprocessor import ReIdentificationPostprocessor
 from tao_triton.python.utils.kitti import write_kitti_annotation
 from tao_triton.python.utils.pose_cls_dataset_convert import pose_cls_dataset_convert
 from tao_triton.python.model.detectnet_model import DetectnetModel
@@ -57,6 +59,7 @@ from tao_triton.python.model.peoplesegnet_model import PeoplesegnetModel
 from tao_triton.python.model.retinanet_model import RetinanetModel
 from tao_triton.python.model.multitask_classification_model import MultitaskClassificationModel
 from tao_triton.python.model.pose_classification_model import PoseClassificationModel
+from tao_triton.python.model.re_identification_model import ReIdentificationModel
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +71,8 @@ TRITON_MODEL_DICT = {
     "peoplesegnet": PeoplesegnetModel,
     "retinanet": RetinanetModel,
     "multitask_classification":MultitaskClassificationModel,
-    "pose_classification":PoseClassificationModel
+    "pose_classification":PoseClassificationModel,
+    "re_identification":ReIdentificationModel
 }
 
 POSTPROCESSOR_DICT = {
@@ -79,7 +83,8 @@ POSTPROCESSOR_DICT = {
     "peoplesegnet": PeoplesegnetPostprocessor,
     "retinanet": RetinanetPostprocessor,
     "multitask_classification": MultitaskClassificationPostprocessor,
-    "pose_classification": PoseClassificationPostprocessor
+    "pose_classification": PoseClassificationPostprocessor,
+    "re_identification": ReIdentificationPostprocessor
 }
 
 
@@ -174,7 +179,7 @@ def parse_command_line(args=None):
                         help='Batch size. Default is 1.')
     parser.add_argument('--mode',
                         type=str,
-                        choices=['Classification', "DetectNet_v2", "LPRNet", "YOLOv3", "Peoplesegnet", "Retinanet", "Multitask_classification", "Pose_classification"],
+                        choices=['Classification', "DetectNet_v2", "LPRNet", "YOLOv3", "Peoplesegnet", "Retinanet", "Multitask_classification", "Pose_classification", "Re_identification"],
                         required=False,
                         default='NONE',
                         help='Type of scaling to apply to image pixels. Default is NONE.')
@@ -214,6 +219,10 @@ def parse_command_line(args=None):
                         type=str,
                         default="",
                         help="Path to the Pose Classification dataset conversion config.")
+    parser.add_argument("--test_dir",
+                        type=str,
+                        default="",
+                        help="Path to the Re Identification test image directory.")
     return parser.parse_args()
 
 
@@ -276,6 +285,7 @@ def main():
     max_batch_size = triton_model.max_batch_size
     pose_sequences = None
     frames = []
+    test_frames = []
     if FLAGS.mode.lower() == "pose_classification":
         # The input is a JSON file of pose metadata.
         if os.path.splitext(FLAGS.image_filename)[-1] == ".json":
@@ -303,6 +313,22 @@ def main():
                 if os.path.isfile(os.path.join(FLAGS.image_filename, f)) and
                 os.path.splitext(f)[-1] in [".jpg", ".jpeg", ".png"]
             ]
+            if FLAGS.mode.lower() == "re_identification":
+                if not os.path.exists(FLAGS.test_dir):
+                    raise FileNotFoundError("The path to the test directory has to be defined for Re-Identification.")
+                pattern = re.compile(r'([-\d]+)_c(\d)')
+                test_frames = []
+                for f in os.listdir(FLAGS.test_dir):
+                    if os.path.isfile(os.path.join(FLAGS.test_dir, f)) and \
+                        os.path.splitext(f)[-1] in [".jpg", ".jpeg", ".png"]:
+                        img_path = os.path.join(FLAGS.test_dir, f)
+                        pid, _ = map(int, pattern.search(img_path).groups())
+                        if pid == -1: continue  # junk images are ignored
+                        frame = Frame(img_path,
+                            triton_model.data_format,
+                            npdtype,
+                            target_shape)
+                        test_frames.append(frame)
         # The input is an image.
         else:
             frames = [
@@ -328,6 +354,10 @@ def main():
         args_postprocessor = [
             FLAGS.batch_size, pose_sequences, FLAGS.output_path
         ]
+    elif FLAGS.mode.lower() == "re_identification":
+        args_postprocessor = [
+            FLAGS.batch_size, frames, test_frames, FLAGS.output_path, triton_model.data_format
+        ]
     else:
         args_postprocessor = [
             FLAGS.batch_size, frames, FLAGS.output_path, triton_model.data_format
@@ -348,6 +378,9 @@ def main():
     total = len(frames)
     if FLAGS.mode.lower() == "pose_classification":
         pbar_total = pose_sequences.shape[0]
+    elif FLAGS.mode.lower() == "re_identification":
+        pbar_total = len(frames) + len(test_frames)
+        frames = frames + test_frames
     else:
         pbar_total = len(frames)
     with tqdm(total=pbar_total) as pbar:
@@ -384,6 +417,9 @@ def main():
                         repeated_image_data.append(img)
                     elif FLAGS.mode.lower() == "peoplesegnet":
                         img = frame._load_img_maskrcnn()
+                        repeated_image_data.append(img)
+                    elif FLAGS.mode.lower() == "re_identification":
+                        img = frame._load_img_re_identification()
                         repeated_image_data.append(img)
                     else:
                         img = frame.load_image()

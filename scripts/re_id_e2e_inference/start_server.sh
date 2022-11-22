@@ -61,12 +61,13 @@ docker build -f "${tao_triton_root}/docker/Dockerfile" \
              -t ${tao_triton_server_docker}:${tao_triton_server_tag} ${tao_triton_root}
 
 mkdir -p ${default_model_download_path} && cd ${default_model_download_path}
-wget --content-disposition ${ngc_pose_classification} -O ${default_model_download_path}/poseclassificationnet_v1.0.zip && \
-     unzip ${default_model_download_path}/poseclassificationnet_v1.0.zip -d ${default_model_download_path}/pose_cls_model/
+rm -rf ${default_model_download_path}/re_id_model
+mkdir ${default_model_download_path}/re_id_model
+wget --no-check-certificate ${ngc_re_identification} -O ${default_model_download_path}/re_id_model/resnet50_market1501.etlt
 
 # Run the server container.
 echo "Running the server on ${gpu_id}"
-find ${tao_triton_root}/model_repository -mindepth 1 ! -regex "^${tao_triton_root}/model_repository/pose_classification_tao\(/.*\)?" -delete
+find ${tao_triton_root}/model_repository -mindepth 1 ! -regex "^${tao_triton_root}/model_repository/re_identification_tao\(/.*\)?" -delete
 docker run -it --rm -v ${tao_triton_root}/model_repository:/model_repository \
            -v ${default_model_download_path}:/tao_models \
            -v ${tao_triton_root}/scripts:/tao_triton \
@@ -76,4 +77,4 @@ docker run -it --rm -v ${tao_triton_root}/model_repository:/model_repository \
            -p 8002:8002 \
            -e CUDA_VISIBLE_DEVICES=$gpu_id \
            ${tao_triton_server_docker}:${tao_triton_server_tag} \
-           /tao_triton/pose_cls_e2e_inference/download_and_convert.sh
+           /tao_triton/re_id_e2e_inference/download_and_convert.sh

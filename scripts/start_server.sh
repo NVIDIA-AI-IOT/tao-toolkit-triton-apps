@@ -81,9 +81,11 @@ wget --content-disposition ${ngc_peoplesegnet}  -O ${default_model_download_path
 rm -rf ${default_model_download_path}/multitask_cls_model
 mkdir ${default_model_download_path}/multitask_cls_model
 wget --no-check-certificate ${ngc_mcls_classification} -O ${default_model_download_path}/multitask_cls_model/multitask_cls_resnet18.etlt
-rm -rf ${default_model_download_path}/pose_cls_model
-mkdir ${default_model_download_path}/pose_cls_model
-wget --no-check-certificate ${ngc_pose_classification} -O ${default_model_download_path}/pose_cls_model/pose_cls_st-gcn.etlt
+wget --content-disposition ${ngc_pose_classification} -O ${default_model_download_path}/poseclassificationnet_v1.0.zip && \
+     unzip ${default_model_download_path}/poseclassificationnet_v1.0.zip -d ${default_model_download_path}/pose_cls_model/
+rm -rf ${default_model_download_path}/re_id_model
+mkdir ${default_model_download_path}/re_id_model
+wget --no-check-certificate ${ngc_re_identification} -O ${default_model_download_path}/re_id_model/resnet50_market1501.etlt
 
 rm -rf ${default_model_download_path}/*.zip
 

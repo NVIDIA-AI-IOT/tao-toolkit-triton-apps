@@ -23,7 +23,7 @@
 
 tao_triton_root=$PWD
 gpu_id=0
-cuda_ver=11.4
+cuda_ver=11.7
 tao_triton_server_docker="nvcr.io/nvidia/tao/triton-apps"
 tao_triton_server_tag="22.06-py3"
 
@@ -37,6 +37,7 @@ tlt_key_peoplesegnet="nvidia_tlt"
 tlt_key_retinanet="nvidia_tlt"
 tlt_key_multitask_classification="nvidia_tlt"
 tlt_key_pose_classification="nvidia_tao"
+tlt_key_re_identification="nvidia_tao"
 
 # Setting model version to run inference on.
 peoplenet_version="pruned_quantized_v2.1.1"
@@ -56,6 +57,7 @@ ngc_yolov3="https://nvidia.box.com/shared/static/3a00fdf8e1s2k3nezoxmfyykydxiyxy
 ngc_peoplesegnet="https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplesegnet/versions/deployable_v2.0/zip"
 ngc_retinanet="https://nvidia.box.com/shared/static/3a00fdf8e1s2k3nezoxmfyykydxiyxy7"
 ngc_mcls_classification="https://docs.google.com/uc?export=download&id=1blJQDQSlLPU6zX3yRmXODRwkcss6B3a3"
-ngc_pose_classification="https://drive.google.com/uc?export=download&id=1_70c2IUW8q6MT5PBjApJogXNuoxt9VAB"
+ngc_pose_classification="https://api.ngc.nvidia.com/v2/models/nvidia/tao/poseclassificationnet/versions/deployable_v1.0/zip"
+ngc_re_identification="https://drive.google.com/uc?export=download&id=1jicWzrPgEgvHLoxS57XLwk3o2xRbXeN_"
 
 default_model_download_path="${tao_triton_root}/tao_models"

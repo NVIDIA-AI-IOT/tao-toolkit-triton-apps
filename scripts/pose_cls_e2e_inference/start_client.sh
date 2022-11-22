@@ -1,13 +1,5 @@
 #!/bin/bash
 
-function check_wget_installed {
-    if ! command -v wget > /dev/null; then
-        echo "Wget not found. Please run sudo apt-get install wget"
-        return false
-    fi
-    return 0
-}
-
 function check_ngc_cli_installation {
     if ! command -v ngc > /dev/null; then
         echo "[ERROR] The NGC CLI tool not found on device in /usr/bin/ or PATH env var"
@@ -101,21 +93,22 @@ make
 
 # Run the Triton client
 cd ${tao_triton_root}
-python -m tao_triton.python.entrypoints.tao_client ${tao_triton_root}/scripts/pose_cls_e2e_inference/demo_3dbp.json \
-       --dataset_convert_config ${tao_triton_root}/tao_triton/python/dataset_convert_specs/dataset_convert_config_pose_classification.yaml \
-       -m pose_classification_tao \
-       -x 1 \
-       -b 1 \
-       --mode Pose_classification \
-       -i https \
-       -u localhost:8000 \
-       --async \
-       --output_path ${tao_triton_root}/scripts/pose_cls_e2e_inference
+python3 -m tao_triton.python.entrypoints.tao_client ${tao_triton_root}/scripts/pose_cls_e2e_inference/demo_3dbp.json \
+        --dataset_convert_config ${tao_triton_root}/tao_triton/python/dataset_convert_specs/dataset_convert_config_pose_classification.yaml \
+        -m pose_classification_tao \
+        -x 1 \
+        -b 1 \
+        --mode Pose_classification \
+        -i https \
+        -u localhost:8000 \
+        --async \
+        --output_path ${tao_triton_root}/scripts/pose_cls_e2e_inference
 
 # Plot inference results
-python ./scripts/pose_cls_e2e_inference/plot_e2e_inference.py ./scripts/pose_cls_e2e_inference/results.json \
-       ./scripts/pose_cls_e2e_inference/demo.mp4 \
-       ./scripts/pose_cls_e2e_inference/results.mp4
+python3 ./scripts/pose_cls_e2e_inference/plot_e2e_inference.py \
+        ./scripts/pose_cls_e2e_inference/results.json \
+        ./scripts/pose_cls_e2e_inference/demo.mp4 \
+        ./scripts/pose_cls_e2e_inference/results.mp4
 
 # Clean repo
 rm -r ${tao_triton_root}/deepstream_reference_apps

@@ -24,6 +24,9 @@
   - [Configuring the Pose_classification model entry in the model repository](#configuring-the-pose_classification-model-entry-in-the-model-repository)
   - [Configuring the Pose_classification model Post-processor](#configuring-the-pose_classification-model-post-processor)
   - [Configuring the Pose_classification data converter](#configuring-the-pose_classification-data-converter)
+- [Re_identification](#re_identification)
+  - [Configuring the Re_identification model entry in the model repository](#configuring-the-re_identification-model-entry-in-the-model-repository)
+  - [Configuring the Re_identification model Post-processor](#configuring-the-re_identification-model-post-processor)
 
 The inference client samples provided in this provide several parameters that the user can configure.
 This section elaborates about those parameters in more detail.
@@ -706,7 +709,7 @@ The Pose_classification inference sample has 3 components that can be configured
 The model repository is the location on the Triton Server, where the model served from. Triton expects the models
 in the model repository to be follow the layout defined [here](https://github.com/triton-inference-server/server/blob/main/docs/model_repository.md#repository-layout).
 
-A sample model repository for an Pose_classification model would have the following contents.
+A sample model repository for a Pose_classification model would have the following contents.
 
 ```text
 model_repository_root/
@@ -791,3 +794,68 @@ The following table explains the configurable parameters of the dataset converte
 | sequence_length_min | The minimum sequence length in frame | int |  | 10 |
 | sequence_length | The sequence length for sampling sequences | int |  | 100 |
 | sequence_overlap | The overlap between sequences during samping | float |  | 0.5 |
+
+## Re_identification
+
+The Re_identification inference sample has 2 components that can be configured
+
+1. [Model Repository](#configuring-the-re_identification-model-entry-in-the-model-repository)
+2. [Configuring the Re_identification model Post-processor](#configuring-the-re_identification-model-post-processor)
+
+### Configuring the Re_identification model entry in the model repository
+
+The model repository is the location on the Triton Server, where the model served from. Triton expects the models
+in the model repository to be follow the layout defined [here](https://github.com/triton-inference-server/server/blob/main/docs/model_repository.md#repository-layout).
+
+A sample model repository for a Re_identification model would have the following contents.
+
+```text
+model_repository_root/
+    re_identification_tao/
+        config.pbtxt
+        1/
+            model.plan
+```
+
+The `config.pbtxt` file, describes the model configuration for the model. A sample model configuration file for the Re_identification
+model would look like this.
+
+```proto
+name: "re_identification_tao"
+platform: "tensorrt_plan"
+max_batch_size: 16
+input [
+  {
+    name: "input"
+    data_type: TYPE_FP32
+    format: FORMAT_NCHW
+    dims: [ 3, 256, 128 ]
+  }
+]
+output [
+  {
+    name: "fc_pred"
+    data_type: TYPE_FP32
+    dims: [ 256 ]
+  }
+]
+dynamic_batching { }
+```
+
+The following table explains the parameters in the config.pbtxt
+
+| **Parameter Name** | **Description** | **Type**  | **Supported Values**| **Sample Values**|
+| :----              | :-------------- | :-------: | :------------------ | :--------------- |
+| name | The user readable name of the served model | string |   | re_identification_tao|
+| platform | The backend used to parse and run the model | string | tensorrt_plan | tensorrt_plan |
+| max_batch_size | The maximum batch size used to create the TensorRT engine.<br>This should be the same as the `max_batch_size` parameter of the `tao-converter`| int |  | 16 |
+| input | Configuration elements for the input nodes | list of protos/node |  |  |
+| output | Configuration elements for the output nodes | list of protos/node |  |  |
+| dynamic_batching | Configuration element to enable [dynamic batching](https://github.com/triton-inference-server/server/blob/main/docs/model_configuration.md#dynamic-batcher) using Triton | proto element |  |  |
+
+The input and output elements in the config.pbtxt provide the configurable parameters for the input and output nodes of the model
+that is being served. As seen in the sample, a Re_identification model has 1 input node `input` and 1 output node `fc_pred`.
+
+### Configuring the Re_identification model Post-processor
+
+Refer to `model_repository/re_identification_tao` folder. 
