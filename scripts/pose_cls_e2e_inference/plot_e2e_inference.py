@@ -69,10 +69,19 @@ def main():
                     for j in range(num_joints):
                         image_frame = cv2.circle(image_frame, joints[j], 2, (255, 255, 255), 2)
 
+
+
+                    #Fix bbox, using minmax joints point
+                    x_list,y_list = zip(*joints)
+                    x_min = min(x_list)
+                    x_max = max(x_list)
+                    y_min = min(y_list)
+                    y_max = max(y_list)
+                    bbox = [x_min,y_min,x_max,y_max]
+                    
                     # Plot bounding box
-                    bbox = person["bbox"]
                     bbox_top_left = [int(bbox[0]), int(bbox[1])]
-                    bbox_bottom_right = [int(bbox[0] + bbox[2] - 1), int(bbox[1] + bbox[3] - 1)]
+                    bbox_bottom_right = [int(bbox[2]), int(bbox[3])]
                     if bbox_top_left[0] < 0:
                         bbox_top_left[0] = 0
                     if bbox_top_left[1] < 0:
