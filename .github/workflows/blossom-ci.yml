@@ -26,23 +26,23 @@ on:
             description: 'argument'     
             required: false
 jobs:
-  Authorization:
-    name: Authorization
-    runs-on: blossom 
-    outputs:
-      args: ${{ env.args }}
+#   Authorization:
+#     name: Authorization
+#     runs-on: blossom 
+#     outputs:
+#       args: ${{ env.args }}
       
-    # This job only runs for pull request comments
-    if: |
-         contains( 'Arun-George-Zachariah,', format('{0},', github.actor)) && 
-         github.event.comment.body == '/blossom-ci'  
-    steps:
-      - name: Check if comment is issued by authorized person
-        run: blossom-ci
-        env:
-          OPERATION: 'AUTH'
-          REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO_KEY_DATA: ${{ secrets.BLOSSOM_KEY }}
+#     # This job only runs for pull request comments
+#     if: |
+#          contains( 'Arun-George-Zachariah,', format('{0},', github.actor)) && 
+#          github.event.comment.body == '/blossom-ci'  
+#     steps:
+#       - name: Check if comment is issued by authorized person
+#         run: blossom-ci
+#         env:
+#           OPERATION: 'AUTH'
+#           REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#           REPO_KEY_DATA: ${{ secrets.BLOSSOM_KEY }}
         
   Vulnerability-scan:
     name: Vulnerability scan
