@@ -33,8 +33,9 @@ jobs:
       args: ${{ env.args }}
       
     # This job only runs for pull request comments
-    if: |
-         contains( 'Arun-George-Zachariah, vpraveen-nv', format('{0},', github.actor))
+    if: contains('\
+      Arun-George-Zachariah,\
+      ', format('{0},', github.actor))
     steps:
       - name: Check if comment is issued by authorized person
         run: blossom-ci
