@@ -46,7 +46,7 @@ jobs:
         
   Vulnerability-scan:
     name: Vulnerability scan
-    needs: [Authorization]
+#     needs: [Authorization]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
