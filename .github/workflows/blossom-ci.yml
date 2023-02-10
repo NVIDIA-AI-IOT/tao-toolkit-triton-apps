@@ -46,7 +46,7 @@ jobs:
         
   Vulnerability-scan:
     name: Vulnerability scan
-#     needs: [Authorization]
+    needs: [Authorization]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -57,7 +57,7 @@ jobs:
           lfs: 'true'
           
       - name: Run blossom action
-        uses: NVIDIA-AI-IOT/blossom-action@main
+        uses: NVIDIA/blossom-action@main
         env:
           REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO_KEY_DATA: ${{ secrets.BLOSSOM_KEY }}
@@ -68,7 +68,7 @@ jobs:
           
   Job-trigger:
     name: Start ci job
-#     needs: [Vulnerability-scan]
+    needs: [Vulnerability-scan]
     runs-on: blossom
     steps:
       - name: Start ci job
