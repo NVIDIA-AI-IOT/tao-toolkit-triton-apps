@@ -74,6 +74,7 @@ testpath==0.4.4
 threadpoolctl==2.1.0
 toml==0.10.2
 torch==1.10.2
+torchvision==0.11.3
 tornado==6.1
 tqdm==4.60.0
 traitlets==4.3.3

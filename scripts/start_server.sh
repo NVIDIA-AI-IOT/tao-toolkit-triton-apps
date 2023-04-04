@@ -87,6 +87,12 @@ rm -rf ${default_model_download_path}/re_id_model
 mkdir ${default_model_download_path}/re_id_model
 wget --no-check-certificate ${ngc_re_identification} -O ${default_model_download_path}/re_id_model/resnet50_market1501.etlt
 
+# Download changeformer onnx file
+rm -rf ${default_model_download_path}/changeformer_model
+mkdir ${default_model_download_path}/changeformer_model
+pip3 install gdown
+gdown https://drive.google.com/uc?id=1z8enM25dezaSHCmHlNaGMtlURga6-66x -O ${default_model_download_path}/changeformer_model/changeformer.onnx
+
 rm -rf ${default_model_download_path}/*.zip
 
 # Run the server container.

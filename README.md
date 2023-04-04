@@ -33,6 +33,9 @@
   - [Re_identification](docs/configuring_the_client.md#re_identification)
     - [Configuring the Re_identification model entry in the model repository](docs/configuring_the_client.md#configuring-the-re_identification-model-entry-in-the-model-repository)
     - [Configuring the Re_identification model Post-processor](docs/configuring_the_client.md#configuring-the-re_identification-model-post-processor)
+  - [ChangeFormer](docs/configuring_the_client.md#changeformer)
+    - [Configuring the Re_identification model entry in the model repository](docs/configuring_the_client.md#configuring-the-changeformer-model-entry-in-the-model-repository)
+    - [Configuring the Re_identification model Post-processor](docs/configuring_the_client.md#configuring-the-changeformer-model-post-processor)
 
 NVIDIA Train Adapt Optimize (TAO) Toolkit, provides users an easy interface to generate accurate and optimized models
 for computer vision and conversational AI use cases. These models are generally deployed via the DeepStream SDK or
@@ -50,6 +53,8 @@ we provide reference applications for 6 computer vision models and 1 character r
 - Multitask Classification
 - Pose Classification
 - Re-Identification
+- ChangeFormer
+
 Triton is an NVIDIA developed inference software solution to efficiently deploy Deep Neural Networks (DNN) developed
 across several frameworks, for example TensorRT, Tensorflow, and ONNXRuntime. Triton Inference Server runs multiple
 models from the same or different frameworks concurrently on a single GPU. In a multi-GPU server, it automatically
@@ -170,6 +175,7 @@ This sample walks through setting up instances of inferencing the following mode
 8. Multitask_classification
 9. Pose_classification
 10. Re_identification
+11. ChangeFormer
 
 Simply run the quick start script:
 
@@ -180,8 +186,8 @@ Simply run the quick start script:
 ### Running the client samples
 
 The Triton client to serve run TAO Toolkit models is implemented in the `${TAO_TRITON_REPO_ROOT}/tao_triton/python/entrypoints/tao_client.py`.
-This implementation is a reference example run to `detectnet_v2` , `classification` ,`LPRNet` , `YOLOv3` , `Peoplesegnet` , `Retinanet` , `Multitask_classification` and
-`Pose_classification`.
+This implementation is a reference example run to `detectnet_v2` , `classification` ,`LPRNet` , `YOLOv3` , `Peoplesegnet` , `Retinanet` , `Multitask_classification`, 
+`Pose_classification` and `Changeformer`.
 
 The CLI options for this client application are as follows:
 
@@ -454,3 +460,27 @@ To perform end-to-end inference, run the following quick start script to start t
  ```sh
  bash scripts/re_id_e2e_inference/start_client.sh
  ```
+
+ 11. For running ChangeFormer model, the command line would be as follows:
+
+```sh
+python tao_triton/python/entrypoints/tao_client.py \
+       /path/to/a/directory/of/images \
+       -m changeformer_tao \
+       -x 1 \
+       -b 1 \
+       --mode ChangeFormer \
+       -i https \
+       -u localhost:8000 \
+       --async \
+       --output_path /path/to/the/output/directory
+       --img_dirs "A" 
+       --img_dirs "B"
+```
+The test image can be downloaded via following command:
+`gdown https://drive.google.com/uc?id=1wl7EhT7upJTx046e4lrHHWtc0O0IICb-`
+
+The onnx model can be downloaded via following command:
+`gdown https://drive.google.com/uc?id=1z8enM25dezaSHCmHlNaGMtlURga6-66x`
+
+The infered images are generated in the `/path/to/the/output/directory/`

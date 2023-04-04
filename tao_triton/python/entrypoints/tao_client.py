@@ -32,6 +32,9 @@ import numpy as np
 import re
 from PIL import Image
 from tqdm import tqdm
+import matplotlib.pyplot as plt
+import torch
+from torchvision import utils
 
 import tritonclient.grpc as grpcclient
 import tritonclient.grpc.model_config_pb2 as mc
@@ -44,6 +47,8 @@ from tao_triton.python.postprocessing.detectnet_processor import DetectNetPostpr
 from tao_triton.python.postprocessing.classification_postprocessor import ClassificationPostprocessor
 from tao_triton.python.postprocessing.lprnet_postprocessor import LPRPostprocessor
 from tao_triton.python.postprocessing.yolov3_postprocessor import YOLOv3Postprocessor
+from tao_triton.python.postprocessing.changeformer_postprocessor import ChangeFormerPostprocessor
+from tao_triton.python.postprocessing.changeformer_postprocessor import de_norm, make_numpy_grid
 from tao_triton.python.postprocessing.peoplesegnet_postprocessor import PeoplesegnetPostprocessor
 from tao_triton.python.postprocessing.retinanet_postprocessor import RetinanetPostprocessor
 from tao_triton.python.postprocessing.multitask_classification_postprocessor import MultitaskClassificationPostprocessor
@@ -60,6 +65,8 @@ from tao_triton.python.model.retinanet_model import RetinanetModel
 from tao_triton.python.model.multitask_classification_model import MultitaskClassificationModel
 from tao_triton.python.model.pose_classification_model import PoseClassificationModel
 from tao_triton.python.model.re_identification_model import ReIdentificationModel
+from tao_triton.python.model.changeformer_model import ChangeFormerModel
+
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +79,8 @@ TRITON_MODEL_DICT = {
     "retinanet": RetinanetModel,
     "multitask_classification":MultitaskClassificationModel,
     "pose_classification":PoseClassificationModel,
-    "re_identification":ReIdentificationModel
+    "re_identification":ReIdentificationModel,
+    "changeformer": ChangeFormerModel
 }
 
 POSTPROCESSOR_DICT = {
@@ -84,7 +92,8 @@ POSTPROCESSOR_DICT = {
     "retinanet": RetinanetPostprocessor,
     "multitask_classification": MultitaskClassificationPostprocessor,
     "pose_classification": PoseClassificationPostprocessor,
-    "re_identification": ReIdentificationPostprocessor
+    "re_identification": ReIdentificationPostprocessor,
+    "changeformer": ChangeFormerPostprocessor,
 }
 
 
@@ -100,6 +109,14 @@ def convert_http_metadata_config(_metadata, _config):
 
     return _model_metadata, _model_config
 
+    
+def vis_inputs(input_array, output_path, id_):
+
+    file_name = os.path.join(
+        output_path, 'img_' + str(id_)+'.jpg')
+    vis = make_numpy_grid(de_norm(input_array))
+    vis = np.clip(vis, a_min=0.0, a_max=1.0)
+    plt.imsave(file_name, vis)
 
 def requestGenerator(batched_image_data, input_name, output_name, dtype, protocol,
                      num_classes=0):
@@ -125,10 +142,21 @@ def requestGenerator(batched_image_data, input_name, output_name, dtype, protoco
     else:
         client = httpclient
 
-    # Set the input data
-    inputs = [client.InferInput(input_name, batched_image_data.shape, dtype)]
-    inputs[0].set_data_from_numpy(batched_image_data)
-
+    
+    input_array=[]
+    if len(input_name)>1:
+        for i in range(len(input_name)):
+            #To sanity check multi-input visualisation. 
+            # vis_inputs(batched_image_data[i], output_path, i)
+            inputs = [client.InferInput(input_name[i], batched_image_data[i].shape, dtype)]
+            inputs[0].set_data_from_numpy(batched_image_data[i])
+            input_array.append(inputs[0])
+        inputs = input_array
+    else: 
+        # Set the input data
+        inputs = [client.InferInput(input_name, batched_image_data.shape, dtype)]
+        inputs[0].set_data_from_numpy(batched_image_data)
+        
     outputs = [
         client.InferRequestedOutput(
             out_name, class_count=num_classes
@@ -179,10 +207,16 @@ def parse_command_line(args=None):
                         help='Batch size. Default is 1.')
     parser.add_argument('--mode',
                         type=str,
-                        choices=['Classification', "DetectNet_v2", "LPRNet", "YOLOv3", "Peoplesegnet", "Retinanet", "Multitask_classification", "Pose_classification", "Re_identification"],
+                        choices=['Classification', "DetectNet_v2", "LPRNet", "YOLOv3", "Peoplesegnet", "Retinanet", "Multitask_classification", "Pose_classification", "Re_identification", "ChangeFormer"],
                         required=False,
                         default='NONE',
                         help='Type of scaling to apply to image pixels. Default is NONE.')
+    parser.add_argument('--img_dirs',
+                        type=list,
+                        required=False,
+                        action='append',
+                        default=['A', 'B'],
+                        help='Relative directory names for Siamese network input images')
     parser.add_argument('-u',
                         '--url',
                         type=str,
@@ -304,15 +338,32 @@ def main():
 
         # The input is a folder of images.
         if os.path.isdir(FLAGS.image_filename):
-            frames = [
-                Frame(os.path.join(FLAGS.image_filename, f),
-                    triton_model.data_format,
-                    npdtype,
-                    target_shape)
-                for f in os.listdir(FLAGS.image_filename)
-                if os.path.isfile(os.path.join(FLAGS.image_filename, f)) and
-                os.path.splitext(f)[-1] in [".jpg", ".jpeg", ".png"]
-            ]
+            if FLAGS.mode.lower() == "changeformer":
+                file_list_dir_a = os.path.join(FLAGS.image_filename, FLAGS.img_dirs[0]) #TODO: Take later from arguments
+                file_list_dir_b = os.path.join(FLAGS.image_filename, FLAGS.img_dirs[1]) 
+                if os.path.exists(file_list_dir_a) and os.path.exists(file_list_dir_b):
+                    img_name = [f for f in sorted(os.listdir(file_list_dir_a))]
+                    frames = [
+                        [Frame(os.path.join(file_list_dir_a, f),
+                            triton_model.data_format,
+                            npdtype,
+                            target_shape),
+                        Frame(os.path.join(file_list_dir_b, f),
+                            triton_model.data_format,
+                            npdtype,
+                            target_shape)]
+                        for f in img_name
+                        if os.path.isfile(os.path.join(file_list_dir_a, f)) and
+                        os.path.splitext(f)[-1] in [".jpg", ".jpeg", ".png"]
+                    ]
+                else:
+                    raise Exception("expecting changeformer input images to be in two directories with names: {}".format(FLAGS.img_dirs))
+            else:
+                frames = []
+                for f in os.listdir(FLAGS.image_filename):
+                    if os.path.isfile(os.path.join(FLAGS.image_filename, f)) and os.path.splitext(f)[-1] in [".jpg", ".jpeg", ".png"]:
+                        frames.append([Frame(os.path.join(FLAGS.image_filename, f),triton_model.data_format,npdtype,target_shape),Frame(os.path.join(FLAGS.image_filename, f),triton_model.data_format,npdtype,target_shape)])
+
             if FLAGS.mode.lower() == "re_identification":
                 if not os.path.exists(FLAGS.test_dir):
                     raise FileNotFoundError("The path to the test directory has to be defined for Re-Identification.")
@@ -406,12 +457,19 @@ def main():
                     batched_image_data = repeated_data[[0], :, :, :, :]
             else:
                 repeated_image_data = []
+                if FLAGS.mode.lower() == "changeformer":
+                    repeated_image1_data = []
 
                 for idx in range(FLAGS.batch_size):
                     frame = frames[image_idx]
                     if FLAGS.mode.lower() == "yolov3" or FLAGS.mode.lower() == "retinanet":
                         img = frame._load_img()
                         repeated_image_data.append(img)
+                    elif FLAGS.mode.lower() == "changeformer":
+                        img0 = frame[0]._load_img_changeformer()
+                        img1 = frame[1]._load_img_changeformer()
+                        repeated_image_data.append(img0)
+                        repeated_image1_data.append(img1)
                     elif FLAGS.mode.lower() == "multitask_classification":
                         img = frame._load_img_multitask_classification()
                         repeated_image_data.append(img)
@@ -434,6 +492,9 @@ def main():
 
                 if max_batch_size > 0:
                     batched_image_data = np.stack(repeated_image_data, axis=0)
+                    if FLAGS.mode.lower() == "changeformer":
+                        batched_image1_data = np.stack(repeated_image1_data, axis=0)
+                        batched_image_data = [batched_image_data, batched_image1_data]
                 else:
                     batched_image_data = repeated_image_data[0]
 
@@ -520,6 +581,10 @@ def main():
             if os.path.splitext(FLAGS.image_filename)[-1] == ".json":
                 postprocessor.apply(
                     response, this_id, render=True, action_data=action_data
+                )
+            elif FLAGS.mode.lower() == "changeformer": 
+                postprocessor.apply(
+                    response, this_id, render=True, img_name=img_name[int(this_id)-1]
                 )
             else:
                 postprocessor.apply(
