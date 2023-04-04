@@ -488,7 +488,7 @@ The following table explains the parameters in the config.pbtxt
 | dynamic_batching | Configuration element to enable [dynamic batching](https://github.com/triton-inference-server/server/blob/main/docs/model_configuration.md#dynamic-batcher) using Triton | proto element |  |  |
 
 The input and output elements in the config.pbtxt provide the configurable parameters for the input and output nodes of the model
-that is being served. As seen in the sample, a ChangeFormer model has 2 input nodes `input0` and `input1` and 5 output node `6938` , `output` , `6746`, `6833` and `6920`. The final output used to generate segmentation change maps correspond to `6938`.
+that is being served. As seen in the sample, a ChangeFormer model has 2 input nodes `input0` and `input1` and 5 output node `6938` , `output` , `6746`, `6833` and `6920`.
 
 ### Configuring the ChangeFormer model Post-processor
 

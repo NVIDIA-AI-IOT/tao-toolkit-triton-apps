@@ -53,8 +53,6 @@ we provide reference applications for 6 computer vision models and 1 character r
 - Multitask Classification
 - Pose Classification
 - Re-Identification
-- ChangeFormer
-
 Triton is an NVIDIA developed inference software solution to efficiently deploy Deep Neural Networks (DNN) developed
 across several frameworks, for example TensorRT, Tensorflow, and ONNXRuntime. Triton Inference Server runs multiple
 models from the same or different frameworks concurrently on a single GPU. In a multi-GPU server, it automatically
