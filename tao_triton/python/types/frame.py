@@ -26,6 +26,39 @@ import numpy as np
 import tritonclient.grpc.model_config_pb2 as mc
 from tao_triton.python.utils.preprocess_input import preprocess_input
 
+import torchvision.transforms.functional as TF
+import torch
+
+
+def to_tensor_and_norm(imgs, labels):
+    # to tensor
+    imgs = [TF.to_tensor(img) for img in imgs]
+    labels = [torch.from_numpy(np.array(img, np.uint8)).unsqueeze(dim=0)
+              for img in labels]
+
+    imgs = [TF.normalize(img, mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+            for img in imgs]
+    return imgs, labels
+
+
+def preprocess_input_cf(imgs, w, h, to_tensor=True):
+    """
+    :param imgs: [ndarray,]
+    :return: [ndarray,],[ndarray,]
+    """
+    # resize image and covert to tensor
+    imgs = [TF.to_pil_image(img) for img in imgs]
+    imgs = [TF.resize(img, [w, h], interpolation=3)
+                    for img in imgs]
+
+    if to_tensor:
+        # to tensor
+        imgs = [TF.to_tensor(img) for img in imgs]
+        imgs = [TF.normalize(img, mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+                for img in imgs]
+
+    return imgs
+    
 class Frame(object):
     """Data structure to contain an image."""
 
@@ -208,3 +241,16 @@ class Frame(object):
                                            mode="torch")
 
         return inference_input
+
+    def _load_img_changeformer(self):
+        """load an image and returns the original image and a numpy array for model to consume.
+
+        Args:
+            img_path (str): path to an image
+        Returns:
+            img (PIL.Image): PIL image of original image.
+            inference_input (array): numpy array for processed image
+        """
+        img = np.asarray(Image.open(self._image_path).convert('RGB'))
+        [img] = preprocess_input_cf([img], self.w, self.h, to_tensor=True)
+        return np.asarray(img)

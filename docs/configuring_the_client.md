@@ -27,6 +27,9 @@
 - [Re_identification](#re_identification)
   - [Configuring the Re_identification model entry in the model repository](#configuring-the-re_identification-model-entry-in-the-model-repository)
   - [Configuring the Re_identification model Post-processor](#configuring-the-re_identification-model-post-processor)
+- [ChangeFormer](#changeformer)
+  - [Configuring the ChangeFormer model entry in the model repository](#configuring-the-changeformer-model-entry-in-the-model-repository)
+  - [Configuring the Post-processor](#configuring-the-changeformer-model-post-processor)
 
 The inference client samples provided in this provide several parameters that the user can configure.
 This section elaborates about those parameters in more detail.
@@ -399,6 +402,97 @@ Y
 Z
 ```
 This characters_list.txt file contains all the characters found in license plate dataset. Each character occupies one line.
+
+## ChangeFormer
+
+1. [Model Repository](#configuring-the-changeformer-model-entry-in-the-model-repository)
+2. [Configuring the ChangeFormer model Post-processor](#configuring-the-changeformer-model-post-processor)
+
+### Configuring the ChangeFormer model entry in the model repository
+
+The model repository is the location on the Triton Server, where the model served from. Triton expects the models
+in the model repository to be follow the layout defined [here](https://github.com/triton-inference-server/server/blob/main/docs/model_repository.md#repository-layout).
+
+A sample model repository for an ChangeFormer model would have the following contents.
+
+```text
+model_repository_root/
+    changeformer_tao/
+        config.pbtxt
+        1/
+            model.plan
+```
+
+The `config.pbtxt` file, describes the model configuration for the model. A sample model configuration file for the ChangeFormer
+model would look like this.
+
+```proto
+name: "changeformer_tao"
+platform: "tensorrt_plan"
+max_batch_size: 1
+input [
+  {
+    name: "input0"
+    data_type: TYPE_FP32
+    format: FORMAT_NCHW
+    dims: [ 3, 256, 256 ]
+  },
+  {
+    name: "input1"
+    data_type: TYPE_FP32
+    format: FORMAT_NCHW
+    dims: [ 3, 256, 256 ]
+  }
+  
+]
+output [
+  {
+    name: "6938"
+    data_type: TYPE_FP32
+    dims: [ 2, 256, 256 ]
+  },
+  {
+    name: "output"
+    data_type: TYPE_FP32
+    dims: [ 2, 16, 16 ]
+  },
+  {
+    name: "6746"
+    data_type: TYPE_FP32
+    dims: [ 2, 16, 16 ]
+  },
+  {
+    name: "6833"
+    data_type: TYPE_FP32
+    dims: [ 2, 32, 32 ]
+  },
+  {
+    name: "6920"
+    data_type: TYPE_FP32
+    dims: [ 2, 64, 64 ]
+  }
+]
+dynamic_batching { }
+
+```
+
+The following table explains the parameters in the config.pbtxt
+
+| **Parameter Name** | **Description** | **Type**  | **Supported Values**| **Sample Values**|
+| :----              | :-------------- | :-------: | :------------------ | :--------------- |
+| name | The user readable name of the served model | string |   | changeformer_tao|
+| platform | The backend used to parse and run the model | string | tensorrt_plan | tensorrt_plan |
+| max_batch_size | The maximum batch size used to create the TensorRT engine.<br>This should be the same as the `max_batch_size` parameter of the `onnx` exported (1 for now)| int | 1 | 16 |
+| input | Configuration elements for the input nodes | list of protos/node |  |  |
+| output | Configuration elements for the output nodes | list of protos/node |  |  |
+| dynamic_batching | Configuration element to enable [dynamic batching](https://github.com/triton-inference-server/server/blob/main/docs/model_configuration.md#dynamic-batcher) using Triton | proto element |  |  |
+
+The input and output elements in the config.pbtxt provide the configurable parameters for the input and output nodes of the model
+that is being served. As seen in the sample, a ChangeFormer model has 2 input nodes `input0` and `input1` and 5 output node `6938` , `output` , `6746`, `6833` and `6920`. The final output used to generate segmentation change maps correspond to `6938`.
+
+### Configuring the ChangeFormer model Post-processor
+
+Refer to `model_repository/changeformer_tao` folder. 
 
 ## YOLOv3
 
