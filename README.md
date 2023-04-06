@@ -53,6 +53,8 @@ we provide reference applications for 6 computer vision models and 1 character r
 - Multitask Classification
 - Pose Classification
 - Re-Identification
+- ChangeFormer
+
 Triton is an NVIDIA developed inference software solution to efficiently deploy Deep Neural Networks (DNN) developed
 across several frameworks, for example TensorRT, Tensorflow, and ONNXRuntime. Triton Inference Server runs multiple
 models from the same or different frameworks concurrently on a single GPU. In a multi-GPU server, it automatically
@@ -475,7 +477,9 @@ python tao_triton/python/entrypoints/tao_client.py \
        --img_dirs "A" 
        --img_dirs "B"
 ```
-The test image can be downloaded via following command:
+The onnx model and test images can be accessed using the following drive link: `https://drive.google.com/drive/folders/1d1qWEJs3ZSSjJ0G6KGcg8HEvhnBl57MN?usp=sharing`
+
+The test images can be downloaded via following command:
 `gdown https://drive.google.com/uc?id=1wl7EhT7upJTx046e4lrHHWtc0O0IICb-`
 
 The onnx model can be downloaded via following command:
