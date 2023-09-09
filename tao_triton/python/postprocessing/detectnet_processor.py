@@ -73,8 +73,8 @@ class DetectNetPostprocessor(Postprocessor):
         """
         self.pproc_config = load_clustering_config(postprocessing_config)
         self.classes = classes
-        self.output_names = ["output_cov/Sigmoid",
-                             "output_bbox/BiasAdd"]
+        self.output_names = ["output_cov/Sigmoid:0",
+                             "output_bbox/BiasAdd:0"]
         self.bbox_norm = [35., 35]
         self.offset = 0.5
         self.scale_h = 1
@@ -120,25 +120,25 @@ class DetectNetPostprocessor(Postprocessor):
         this_id = int(this_id)
         for output_name in self.output_names:
             output_array[output_name] = results.as_numpy(output_name).transpose(0, 1, 3, 2)
-        assert len(self.classes) == output_array["output_cov/Sigmoid"].shape[1], (
+        assert len(self.classes) == output_array["output_cov/Sigmoid:0"].shape[1], (
             "Number of classes {} != number of dimensions in the output_cov/Sigmoid: {}".format(
-                len(self.classes), output_array["output_cov/Sigmoid"].shape[1]
+                len(self.classes), output_array["output_cov/Sigmoid:0"].shape[1]
             )
         )
         abs_bbox = denormalize_bounding_bboxes(
-            output_array["output_bbox/BiasAdd"], self.stride,
+            output_array["output_bbox/BiasAdd:0"], self.stride,
             self.offset, self.bbox_norm, len(self.classes), self.scale_w,
             self.scale_h, self.data_format, self.target_shape, self.frames,
             this_id - 1
         )
         valid_indices = thresholded_indices(
-            output_array["output_cov/Sigmoid"], len(self.classes),
+            output_array["output_cov/Sigmoid:0"], len(self.classes),
             self.classes,
             self.coverage_thresholds
         )
         batchwise_boxes = []
         for image_idx, indices in enumerate(valid_indices):
-            covs = output_array["output_cov/Sigmoid"][image_idx, :, :, :]
+            covs = output_array["output_cov/Sigmoid:0"][image_idx, :, :, :]
             bboxes = abs_bbox[image_idx, :, :, :]
             imagewise_boxes = []
             for class_idx in range(len(self.classes)):
