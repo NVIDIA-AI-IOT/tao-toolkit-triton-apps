@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/tritonserver:22.06-py3
+FROM nvcr.io/nvidia/tritonserver:23.02-py3
 
 # Installing TRT OSS to the Triton Container.
 RUN apt-get update && \
@@ -14,18 +14,24 @@ RUN cd /tmp \
     && cd -
 RUN cd /opt
 RUN ln -s /usr/bin/python3 /usr/bin/python
+# Clone and checkout TensorRT OSS
+# Moving TensorRT to 8.5 branch.
+ENV TRT_TAG "release/8.5"
+ENV TRT_INCLUDE_DIR="/usr/include/x86_64-linux-gnu"
+# Install TRT OSS
 RUN mkdir trt_oss_src && \
     cd trt_oss_src && \
     echo "$PWD Building TRT OSS..." && \
-    git clone -b 22.02 https://github.com/nvidia/TensorRT TensorRT && \
+    git clone -b $TRT_TAG https://github.com/NVIDIA/TensorRT.git TensorRT && \
     cd TensorRT && \
     git submodule update --init --recursive && \
     mkdir -p build && cd build  && \
-    cmake .. -DGPU_ARCHS="35 52 53 60 61 70 75 80 86" -DTRT_LIB_DIR=/usr/lib/x86_64-linux-gnu -DTRT_BIN_DIR=`pwd`/out -DCUDA_VERSION=11.4 -DCUDNN_VERSION=8.4 && \
-    make -j8 && \
-    cp libnvinfer_plugin.so.8.2.* /usr/lib/x86_64-linux-gnu/libnvinfer_plugin.so.8.2.5 && \
+    cmake .. -DGPU_ARCHS="53 60 61 70 75 80 86 90" -DTRT_LIB_DIR=/usr/lib/x86_64-linux-gnu -DTRT_BIN_DIR=`pwd`/out -DCUDA_VERSION=11.8 -DCUDNN_VERSION=8.7 && \
+    make -j32 && \
+    cp libnvinfer_plugin.so.8.5.3 /usr/lib/x86_64-linux-gnu/libnvinfer_plugin.so.8.5.3 && \
     cp libnvinfer_plugin_static.a /usr/lib/x86_64-linux-gnu/libnvinfer_plugin_static.a && \
-    cp libnvonnxparser.so.8.2.* /usr/lib/x86_64-linux-gnu/libnvonnxparser.so.8.2.5 && \
+    cp libnvonnxparser.so.8.5.3 /usr/lib/x86_64-linux-gnu/libnvonnxparser.so.8.5.3 && \
+    cp libnvcaffeparser.so.8.5.3 /usr/lib/x86_64-linux-gnu/libnvcaffeparser.so.8.5.3 && \
     cp trtexec /usr/local/bin/ && \
     cd ../../../ && \
     rm -rf trt_oss_src

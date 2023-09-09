@@ -23,9 +23,9 @@
 
 tao_triton_root=$PWD
 gpu_id=0
-cuda_ver=11.7
+cuda_ver=12.0
 tao_triton_server_docker="nvcr.io/nvidia/tao/triton-apps"
-tao_triton_server_tag="22.06-py3"
+tao_triton_server_tag="23.02-py3"
 
 # Load key for the models.
 tlt_key_peoplenet="tlt_encode"
@@ -40,8 +40,8 @@ tlt_key_pose_classification="nvidia_tao"
 tlt_key_re_identification="nvidia_tao"
 
 # Setting model version to run inference on.
-peoplenet_version="pruned_quantized_v2.1.1"
-dashcamnet_version="pruned_v1.0.1"
+peoplenet_version="pruned_quantized_decrypted_v2.3.3"
+dashcamnet_version="pruned_v1.0.4"
 vehicletypenet_version="pruned_v1.0.1"
 
 # Setting model version to run inference on for Pose Classification.
