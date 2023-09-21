@@ -1,4 +1,4 @@
-name: "changeformer_tao"
+name: "visual_changenet_segmentation_tao"
 platform: "tensorrt_plan"
 max_batch_size: 1
 input [
@@ -18,27 +18,27 @@ input [
 ]
 output [
   {
-    name: "6938"
+    name: "output_final"
     data_type: TYPE_FP32
     dims: [ 2, 256, 256 ]
   },
   {
-    name: "output"
+    name: "output0"
     data_type: TYPE_FP32
     dims: [ 2, 16, 16 ]
   },
   {
-    name: "6746"
+    name: "output1"
     data_type: TYPE_FP32
     dims: [ 2, 16, 16 ]
   },
   {
-    name: "6833"
+    name: "output2"
     data_type: TYPE_FP32
     dims: [ 2, 32, 32 ]
   },
   {
-    name: "6920"
+    name: "output3"
     data_type: TYPE_FP32
     dims: [ 2, 64, 64 ]
   }
