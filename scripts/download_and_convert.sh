@@ -109,8 +109,9 @@ tao-converter /tao_models/re_id_model/resnet50_market1501.etlt \
               -m 16 \
               -e /model_repository/re_identification_tao/1/model.plan
 
-echo "Converting the changeformer model"
-mkdir -p /model_repository/changeformer_tao/1
-trtexec --onnx=/tao_models/changeformer_model/changeformer.onnx  --saveEngine=/model_repository/changeformer_tao/1
+echo "Converting the changenet segmentation model"
+mkdir -p /model_repository/visual_changenet_segmentation_tao/1
+trtexec --onnx=/tao_models/visual_changenet_segmentation_tao/changenet_segment.onnx  \
+        --saveEngine=/model_repository/visual_changenet_segmentation_tao/1/model.plan
 
 /opt/tritonserver/bin/tritonserver --model-store /model_repository

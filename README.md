@@ -33,9 +33,9 @@
   - [Re_identification](docs/configuring_the_client.md#re_identification)
     - [Configuring the Re_identification model entry in the model repository](docs/configuring_the_client.md#configuring-the-re_identification-model-entry-in-the-model-repository)
     - [Configuring the Re_identification model Post-processor](docs/configuring_the_client.md#configuring-the-re_identification-model-post-processor)
-  - [ChangeFormer](docs/configuring_the_client.md#changeformer)
-    - [Configuring the Re_identification model entry in the model repository](docs/configuring_the_client.md#configuring-the-changeformer-model-entry-in-the-model-repository)
-    - [Configuring the Re_identification model Post-processor](docs/configuring_the_client.md#configuring-the-changeformer-model-post-processor)
+  - [VisualChangeNet](docs/configuring_the_client.md#visual_changenet)
+    - [Configuring the Re_identification model entry in the model repository](docs/configuring_the_client.md#configuring-the-visual-changenet-model-entry-in-the-model-repository)
+    - [Configuring the Visual ChangeNet model Post-processor](docs/configuring_the_client.md#configuring-the-visual-changenet-model-post-processor)
 
 NVIDIA Train Adapt Optimize (TAO) Toolkit, provides users an easy interface to generate accurate and optimized models
 for computer vision and conversational AI use cases. These models are generally deployed via the DeepStream SDK or
@@ -53,7 +53,7 @@ we provide reference applications for 6 computer vision models and 1 character r
 - Multitask Classification
 - Pose Classification
 - Re-Identification
-- ChangeFormer
+- VisualChangeNet
 
 Triton is an NVIDIA developed inference software solution to efficiently deploy Deep Neural Networks (DNN) developed
 across several frameworks, for example TensorRT, Tensorflow, and ONNXRuntime. Triton Inference Server runs multiple
@@ -175,7 +175,7 @@ This sample walks through setting up instances of inferencing the following mode
 8. Multitask_classification
 9. Pose_classification
 10. Re_identification
-11. ChangeFormer
+11. VisualChangeNet
 
 Simply run the quick start script:
 
@@ -186,47 +186,46 @@ Simply run the quick start script:
 ### Running the client samples
 
 The Triton client to serve run TAO Toolkit models is implemented in the `${TAO_TRITON_REPO_ROOT}/tao_triton/python/entrypoints/tao_client.py`.
-This implementation is a reference example run to `detectnet_v2` , `classification` ,`LPRNet` , `YOLOv3` , `Peoplesegnet` , `Retinanet` , `Multitask_classification`, 
-`Pose_classification` and `Changeformer`.
+This implementation is a reference example run to `detectnet_v2` , `classification` ,`LPRNet` , `YOLOv3` , `Peoplesegnet` , `Retinanet` , `Multitask_classification`, `Pose_classification` and `VisualChangeNet`.
 
 The CLI options for this client application are as follows:
 
 ```text
-usage: tao_client.py [-h] [-v] [-a] [--streaming] -m MODEL_NAME
-                     [-x MODEL_VERSION] [-b BATCH_SIZE]
-                     [--mode {Classification,DetectNet_v2,LPRNet,YOLOv3,Peoplesegnet,Retinanet,Multitask_classification,Pose_classification}] [-u URL]
-                     [-i PROTOCOL] [--class_list CLASS_LIST] --output_path
-                     OUTPUT_PATH
-                     [--postprocessing_config POSTPROCESSING_CONFIG]
-                     [input_filename]
+usage: tao_client.py [-h] [-v] [-a] [--streaming] -m MODEL_NAME [-x MODEL_VERSION] [-b BATCH_SIZE]
+                     [--mode {Classification,DetectNet_v2,LPRNet,YOLOv3,Peoplesegnet,Retinanet,Multitask_classification,Pose_classification,Re_identification,VisualChangeNet}]
+                     [--img_dirs IMG_DIRS] [-u URL] [-i PROTOCOL] [--class_list CLASS_LIST] --output_path OUTPUT_PATH [--postprocessing_config POSTPROCESSING_CONFIG]
+                     [--dataset_convert_config DATASET_CONVERT_CONFIG] [--test_dir TEST_DIR]
+                     [image_filename]
 
 positional arguments:
-  input_filename        Input image / Input folder / Input pose sequences.
+  image_filename        Input image / Input folder / Input JSON / Input pose sequences.
 
 optional arguments:
   -h, --help            show this help message and exit
   -v, --verbose         Enable verbose output
   -a, --async           Use asynchronous inference API
-  --streaming           Use streaming inference API. The flag is only
-                        available with gRPC protocol.
+  --streaming           Use streaming inference API. The flag is only available with gRPC protocol.
   -m MODEL_NAME, --model-name MODEL_NAME
-                        Name of the model instance in the server
+                        Name of model
   -x MODEL_VERSION, --model-version MODEL_VERSION
                         Version of model. Default is to use latest version.
   -b BATCH_SIZE, --batch-size BATCH_SIZE
                         Batch size. Default is 1.
-  --mode {Classification, DetectNet_v2, LPRNet, YOLOv3, Peoplesegnet, Retinanet, Multitask_classification, Pose_classification, Re_identification}
-                        Type of network model. Default is NONE.
+  --mode {Classification,DetectNet_v2,LPRNet,YOLOv3,Peoplesegnet,Retinanet,Multitask_classification,Pose_classification,Re_identification,VisualChangeNet}
+                        Type of scaling to apply to image pixels. Default is NONE.
+  --img_dirs IMG_DIRS   Relative directory names for Siamese network input images
   -u URL, --url URL     Inference server URL. Default is localhost:8000.
   -i PROTOCOL, --protocol PROTOCOL
-                        Protocol (HTTP/gRPC) used to communicate with the
-                        inference service. Default is HTTP.
+                        Protocol (HTTP/gRPC) used to communicate with the inference service. Default is HTTP.
   --class_list CLASS_LIST
                         Comma separated class names
   --output_path OUTPUT_PATH
                         Path to where the inferenced outputs are stored.
   --postprocessing_config POSTPROCESSING_CONFIG
                         Path to the DetectNet_v2 clustering config.
+  --dataset_convert_config DATASET_CONVERT_CONFIG
+                        Path to the Pose Classification dataset conversion config.
+  --test_dir TEST_DIR   Path to the Re Identification test image directory.
 ```
 
 Assuming that a Triton inference server with a valid Detectnet_v2 TensorRT engine has
@@ -461,28 +460,21 @@ To perform end-to-end inference, run the following quick start script to start t
  bash scripts/re_id_e2e_inference/start_client.sh
  ```
 
- 11. For running ChangeFormer model, the command line would be as follows:
+ 11. For running VisualChangeNet model, the command line would be as follows:
 
 ```sh
 python tao_triton/python/entrypoints/tao_client.py \
        /path/to/a/directory/of/images \
-       -m changeformer_tao \
+       -m visual_changenet_segmentation_tao \
        -x 1 \
        -b 1 \
-       --mode ChangeFormer \
+       --mode VisualChangeNet \
        -i https \
        -u localhost:8000 \
        --async \
-       --output_path /path/to/the/output/directory
-       --img_dirs "A" 
+       --output_path /path/to/the/output/directory \
+       --img_dirs "A" \
        --img_dirs "B"
 ```
-The onnx model and test images can be accessed using the following drive link: `https://drive.google.com/drive/folders/1d1qWEJs3ZSSjJ0G6KGcg8HEvhnBl57MN?usp=sharing`
-
-The test images can be downloaded via following command:
-`gdown https://drive.google.com/uc?id=1wl7EhT7upJTx046e4lrHHWtc0O0IICb-`
-
-The onnx model can be downloaded via following command:
-`gdown https://drive.google.com/uc?id=1z8enM25dezaSHCmHlNaGMtlURga6-66x`
 
 The infered images are generated in the `/path/to/the/output/directory/`

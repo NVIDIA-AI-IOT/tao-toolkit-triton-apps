@@ -242,7 +242,7 @@ class Frame(object):
 
         return inference_input
 
-    def _load_img_changeformer(self):
+    def _load_img_visual_changenet(self):
         """load an image and returns the original image and a numpy array for model to consume.
 
         Args:

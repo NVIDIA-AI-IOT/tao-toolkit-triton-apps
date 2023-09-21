@@ -47,8 +47,8 @@ from tao_triton.python.postprocessing.detectnet_processor import DetectNetPostpr
 from tao_triton.python.postprocessing.classification_postprocessor import ClassificationPostprocessor
 from tao_triton.python.postprocessing.lprnet_postprocessor import LPRPostprocessor
 from tao_triton.python.postprocessing.yolov3_postprocessor import YOLOv3Postprocessor
-from tao_triton.python.postprocessing.changeformer_postprocessor import ChangeFormerPostprocessor
-from tao_triton.python.postprocessing.changeformer_postprocessor import de_norm, make_numpy_grid
+from tao_triton.python.postprocessing.visual_changenet_postprocessor import VisualChangeNetPostprocessor
+from tao_triton.python.postprocessing.visual_changenet_postprocessor import de_norm, make_numpy_grid
 from tao_triton.python.postprocessing.peoplesegnet_postprocessor import PeoplesegnetPostprocessor
 from tao_triton.python.postprocessing.retinanet_postprocessor import RetinanetPostprocessor
 from tao_triton.python.postprocessing.multitask_classification_postprocessor import MultitaskClassificationPostprocessor
@@ -65,7 +65,7 @@ from tao_triton.python.model.retinanet_model import RetinanetModel
 from tao_triton.python.model.multitask_classification_model import MultitaskClassificationModel
 from tao_triton.python.model.pose_classification_model import PoseClassificationModel
 from tao_triton.python.model.re_identification_model import ReIdentificationModel
-from tao_triton.python.model.changeformer_model import ChangeFormerModel
+from tao_triton.python.model.visual_changenet_model import VisualChangeNetModel
 
 
 logger = logging.getLogger(__name__)
@@ -80,7 +80,7 @@ TRITON_MODEL_DICT = {
     "multitask_classification":MultitaskClassificationModel,
     "pose_classification":PoseClassificationModel,
     "re_identification":ReIdentificationModel,
-    "changeformer": ChangeFormerModel
+    "visual_changenet": VisualChangeNetModel
 }
 
 POSTPROCESSOR_DICT = {
@@ -93,8 +93,21 @@ POSTPROCESSOR_DICT = {
     "multitask_classification": MultitaskClassificationPostprocessor,
     "pose_classification": PoseClassificationPostprocessor,
     "re_identification": ReIdentificationPostprocessor,
-    "changeformer": ChangeFormerPostprocessor,
+    "visual_changenet": VisualChangeNetPostprocessor,
 }
+
+SUPPORTED_MODELS = [
+    'Classification',
+    "DetectNet_v2",
+    "LPRNet",
+    "YOLOv3",
+    "Peoplesegnet",
+    "Retinanet",
+    "Multitask_classification",
+    "Pose_classification",
+    "Re_identification",
+    "VisualChangeNet"
+]
 
 
 def completion_callback(user_data, result, error):
@@ -109,18 +122,20 @@ def convert_http_metadata_config(_metadata, _config):
 
     return _model_metadata, _model_config
 
-    
-def vis_inputs(input_array, output_path, id_):
 
+def vis_inputs(input_array, output_path, id_):
+    """Function to visualize input images."""
     file_name = os.path.join(
         output_path, 'img_' + str(id_)+'.jpg')
     vis = make_numpy_grid(de_norm(input_array))
     vis = np.clip(vis, a_min=0.0, a_max=1.0)
     plt.imsave(file_name, vis)
 
-def requestGenerator(batched_image_data, input_name, output_name, dtype, protocol,
-                     num_classes=0):
-    """Generator for triton inference requests.
+
+def request_generator(
+        batched_image_data, input_name, output_name, dtype, protocol,
+        num_classes=0):
+    """Generator for triton inference requests.Qza2PgE8ax7#y5
 
     Args:
         batch_image_data (np.ndarray): Numpy array of a batch of images.
@@ -142,9 +157,8 @@ def requestGenerator(batched_image_data, input_name, output_name, dtype, protoco
     else:
         client = httpclient
 
-    
     input_array=[]
-    if len(input_name)>1:
+    if len(input_name) > 1:
         for i in range(len(input_name)):
             #To sanity check multi-input visualisation. 
             # vis_inputs(batched_image_data[i], output_path, i)
@@ -156,7 +170,7 @@ def requestGenerator(batched_image_data, input_name, output_name, dtype, protoco
         # Set the input data
         inputs = [client.InferInput(input_name, batched_image_data.shape, dtype)]
         inputs[0].set_data_from_numpy(batched_image_data)
-        
+
     outputs = [
         client.InferRequestedOutput(
             out_name, class_count=num_classes
@@ -207,7 +221,7 @@ def parse_command_line(args=None):
                         help='Batch size. Default is 1.')
     parser.add_argument('--mode',
                         type=str,
-                        choices=['Classification', "DetectNet_v2", "LPRNet", "YOLOv3", "Peoplesegnet", "Retinanet", "Multitask_classification", "Pose_classification", "Re_identification", "ChangeFormer"],
+                        choices=SUPPORTED_MODELS,
                         required=False,
                         default='NONE',
                         help='Type of scaling to apply to image pixels. Default is NONE.')
@@ -276,7 +290,7 @@ def main():
                         level=log_level)
 
     if FLAGS.streaming and FLAGS.protocol.lower() != "grpc":
-        raise Exception("Streaming is only allowed with gRPC protocol")
+        raise NotImplementedError("Streaming is only allowed with gRPC protocol")
 
     try:
         if FLAGS.protocol.lower() == "grpc":
@@ -289,31 +303,34 @@ def main():
             concurrency = 20 if FLAGS.async_set else 1
             triton_client = httpclient.InferenceServerClient(
                 url=FLAGS.url, verbose=FLAGS.verbose, concurrency=concurrency)
-    except Exception as e:
-        print("client creation failed: " + str(e))
+    except Exception as exc:
+        print("Client creation failed: " + str(exc))
         sys.exit(1)
 
     # Make sure the model matches our requirements, and get some
     # properties of the model that we need for preprocessing
     try:
         model_metadata = triton_client.get_model_metadata(
-            model_name=FLAGS.model_name, model_version=FLAGS.model_version)
-    except InferenceServerException as e:
-        print("failed to retrieve the metadata: " + str(e))
+            model_name=FLAGS.model_name,
+            model_version=FLAGS.model_version
+        )
+    except InferenceServerException as exc:
+        print("failed to retrieve the metadata: " + str(exc))
         sys.exit(1)
 
     try:
         model_config = triton_client.get_model_config(
             model_name=FLAGS.model_name, model_version=FLAGS.model_version)
-    except InferenceServerException as e:
-        print("failed to retrieve the config: " + str(e))
+    except InferenceServerException as exc:
+        print("failed to retrieve the config: " + str(exc))
         sys.exit(1)
 
     if FLAGS.protocol.lower() == "grpc":
         model_config = model_config.config
     else:
         model_metadata, model_config = convert_http_metadata_config(
-            model_metadata, model_config)
+            model_metadata, model_config
+        )
 
     triton_model = TRITON_MODEL_DICT[FLAGS.mode.lower()].from_metadata(model_metadata, model_config)
     max_batch_size = triton_model.max_batch_size
@@ -324,49 +341,87 @@ def main():
         # The input is a JSON file of pose metadata.
         if os.path.splitext(FLAGS.image_filename)[-1] == ".json":
             if not os.path.isfile(FLAGS.dataset_convert_config):
-                raise FileNotFoundError("Dataset conversion config must be defined for Pose Classification.")
-            pose_sequences, action_data = pose_cls_dataset_convert(FLAGS.image_filename,
-                                                                FLAGS.dataset_convert_config)
+                raise FileNotFoundError(
+                    "Dataset conversion config must be defined for Pose Classification."
+                )
+            pose_sequences, action_data = pose_cls_dataset_convert(
+                FLAGS.image_filename,
+                FLAGS.dataset_convert_config
+            )
         # The input is a NumPy array of pose sequences.
         elif os.path.splitext(FLAGS.image_filename)[-1] == ".npy":
             pose_sequences = np.load(file=FLAGS.image_filename)
         else:
-            raise NotImplementedError("The input for Pose Classification has to be a JSON file or a NumPy array.")
+            raise NotImplementedError(
+                "The input for Pose Classification has to be a JSON file or a NumPy array."
+            )
     else:
         target_shape = (triton_model.c, triton_model.h, triton_model.w)
         npdtype = triton_to_np_dtype(triton_model.triton_dtype)
 
         # The input is a folder of images.
         if os.path.isdir(FLAGS.image_filename):
-            if FLAGS.mode.lower() == "changeformer":
-                file_list_dir_a = os.path.join(FLAGS.image_filename, FLAGS.img_dirs[0]) #TODO: Take later from arguments
-                file_list_dir_b = os.path.join(FLAGS.image_filename, FLAGS.img_dirs[1]) 
+            if FLAGS.mode.lower() == "visual_changenet":
+                file_list_dir_a = os.path.join(
+                    FLAGS.image_filename,
+                    FLAGS.img_dirs[0]
+                )  # FIXME: Take later from arguments
+                file_list_dir_b = os.path.join(
+                    FLAGS.image_filename,
+                    FLAGS.img_dirs[1]
+                ) 
                 if os.path.exists(file_list_dir_a) and os.path.exists(file_list_dir_b):
                     img_name = [f for f in sorted(os.listdir(file_list_dir_a))]
                     frames = [
-                        [Frame(os.path.join(file_list_dir_a, f),
-                            triton_model.data_format,
-                            npdtype,
-                            target_shape),
-                        Frame(os.path.join(file_list_dir_b, f),
-                            triton_model.data_format,
-                            npdtype,
-                            target_shape)]
+                        [
+                            Frame(
+                                os.path.join(file_list_dir_a, f),
+                                triton_model.data_format,
+                                npdtype,
+                                target_shape
+                            ),
+                            Frame(
+                                os.path.join(file_list_dir_b, f),
+                                triton_model.data_format,
+                                npdtype,
+                                target_shape
+                            )
+                        ]
                         for f in img_name
                         if os.path.isfile(os.path.join(file_list_dir_a, f)) and
                         os.path.splitext(f)[-1] in [".jpg", ".jpeg", ".png"]
                     ]
                 else:
-                    raise Exception("expecting changeformer input images to be in two directories with names: {}".format(FLAGS.img_dirs))
+                    raise NotImplementedError(
+                        "Expecting visual_changenet input images to be in "
+                        f"two directories with names: {FLAGS.imd_dirs}"
+                    )
             else:
                 frames = []
                 for f in os.listdir(FLAGS.image_filename):
                     if os.path.isfile(os.path.join(FLAGS.image_filename, f)) and os.path.splitext(f)[-1] in [".jpg", ".jpeg", ".png"]:
-                        frames.append([Frame(os.path.join(FLAGS.image_filename, f),triton_model.data_format,npdtype,target_shape),Frame(os.path.join(FLAGS.image_filename, f),triton_model.data_format,npdtype,target_shape)])
+                        frames.append(
+                            [
+                                Frame(
+                                    os.path.join(FLAGS.image_filename, f),
+                                    triton_model.data_format,
+                                    npdtype,
+                                    target_shape
+                                ),
+                                Frame(
+                                    os.path.join(FLAGS.image_filename, f),
+                                    triton_model.data_format,
+                                    npdtype,
+                                    target_shape
+                                )
+                            ]
+                        )
 
             if FLAGS.mode.lower() == "re_identification":
                 if not os.path.exists(FLAGS.test_dir):
-                    raise FileNotFoundError("The path to the test directory has to be defined for Re-Identification.")
+                    raise FileNotFoundError(
+                        "The path to the test directory has to be defined for Re-Identification."
+                    )
                 pattern = re.compile(r'([-\d]+)_c(\d)')
                 test_frames = []
                 for f in os.listdir(FLAGS.test_dir):
@@ -375,10 +430,12 @@ def main():
                         img_path = os.path.join(FLAGS.test_dir, f)
                         pid, _ = map(int, pattern.search(img_path).groups())
                         if pid == -1: continue  # junk images are ignored
-                        frame = Frame(img_path,
+                        frame = Frame(
+                            img_path,
                             triton_model.data_format,
                             npdtype,
-                            target_shape)
+                            target_shape
+                        )
                         test_frames.append(frame)
         # The input is an image.
         else:
@@ -433,7 +490,7 @@ def main():
         pbar_total = len(frames) + len(test_frames)
         frames = frames + test_frames
     else:
-        pbar_total = len(frames)
+        pbar_total = total
     with tqdm(total=pbar_total) as pbar:
         while not last_request:
             batched_image_data = None
@@ -457,7 +514,7 @@ def main():
                     batched_image_data = repeated_data[[0], :, :, :, :]
             else:
                 repeated_image_data = []
-                if FLAGS.mode.lower() == "changeformer":
+                if FLAGS.mode.lower() == "visual_changenet":
                     repeated_image1_data = []
 
                 for idx in range(FLAGS.batch_size):
@@ -465,9 +522,9 @@ def main():
                     if FLAGS.mode.lower() == "yolov3" or FLAGS.mode.lower() == "retinanet":
                         img = frame._load_img()
                         repeated_image_data.append(img)
-                    elif FLAGS.mode.lower() == "changeformer":
-                        img0 = frame[0]._load_img_changeformer()
-                        img1 = frame[1]._load_img_changeformer()
+                    elif FLAGS.mode.lower() == "visual_changenet":
+                        img0 = frame[0]._load_img_visual_changenet()
+                        img1 = frame[1]._load_img_visual_changenet()
                         repeated_image_data.append(img0)
                         repeated_image1_data.append(img1)
                     elif FLAGS.mode.lower() == "multitask_classification":
@@ -492,7 +549,7 @@ def main():
 
                 if max_batch_size > 0:
                     batched_image_data = np.stack(repeated_image_data, axis=0)
-                    if FLAGS.mode.lower() == "changeformer":
+                    if FLAGS.mode.lower() == "visual_changenet":
                         batched_image1_data = np.stack(repeated_image1_data, axis=0)
                         batched_image_data = [batched_image_data, batched_image1_data]
                 else:
@@ -506,7 +563,7 @@ def main():
                 req_gen_kwargs = {}
                 if FLAGS.mode.lower() in ["classification", "pose_classification"]:
                     req_gen_kwargs["num_classes"] = model_config.output[0].dims[0]
-                req_generator = requestGenerator(*req_gen_args, **req_gen_kwargs)
+                req_generator = request_generator(*req_gen_args, **req_gen_kwargs)
                 for inputs, outputs in req_generator:
                     sent_count += 1
                     if FLAGS.streaming:
@@ -541,12 +598,11 @@ def main():
                                                 model_version=FLAGS.model_version,
                                                 outputs=outputs))
 
-            except InferenceServerException as e:
-                print("inference failed: " + str(e))
+            except InferenceServerException as exc:
+                print("inference failed: " + str(exc))
                 if FLAGS.streaming:
                     triton_client.stop_stream()
                 sys.exit(1)
-            
             pbar.update(FLAGS.batch_size)
 
     if FLAGS.streaming:
@@ -582,7 +638,7 @@ def main():
                 postprocessor.apply(
                     response, this_id, render=True, action_data=action_data
                 )
-            elif FLAGS.mode.lower() == "changeformer": 
+            elif FLAGS.mode.lower() == "visual_changenet":
                 postprocessor.apply(
                     response, this_id, render=True, img_name=img_name[int(this_id)-1]
                 )
@@ -595,14 +651,14 @@ def main():
 
     if os.path.splitext(FLAGS.image_filename)[-1] == ".json":
         output_file = os.path.join(FLAGS.output_path, "results.json")
-        for b in range(len(action_data)):
-            for f in range(len(action_data[b]["batches"])):
-                for p in range(len(action_data[b]["batches"][f]["objects"])):
-                    action_data[b]["batches"][f]["objects"][p].pop("segment_id", None)
-        with open(output_file, 'w') as f:
-            json.dump(action_data, f, sort_keys=True, indent=2, ensure_ascii=False)
-        
+        for idb in range(len(action_data)):
+            for idf in range(len(action_data[idb]["batches"])):
+                for idp in range(len(action_data[idb]["batches"][idf]["objects"])):
+                    action_data[idb]["batches"][idf]["objects"][idp].pop("segment_id", None)
+        with open(output_file, 'w') as outfile:
+            json.dump(action_data, outfile, sort_keys=True, indent=2, ensure_ascii=False)
     logger.info("PASS")
+
 
 if __name__ == '__main__':
     main()

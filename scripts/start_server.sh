@@ -60,7 +60,7 @@ source $config_path
 docker build -f "${tao_triton_root}/docker/Dockerfile" \
              -t ${tao_triton_server_docker}:${tao_triton_server_tag} ${tao_triton_root}
 
-mkdir ${default_model_download_path} && cd ${default_model_download_path}
+mkdir -p ${default_model_download_path} && cd ${default_model_download_path}
 wget --content-disposition ${ngc_peoplenet} -O ${default_model_download_path}/peoplenet_${peoplenet_version}.zip && \
      unzip ${default_model_download_path}/peoplenet_${peoplenet_version}.zip -d ${default_model_download_path}/peoplenet_model/
 wget --content-disposition ${ngc_dashcamnet} -O ${default_model_download_path}/dashcamnet_${dashcamnet_version}.zip && \
@@ -86,13 +86,8 @@ wget --content-disposition ${ngc_pose_classification} -O ${default_model_downloa
 rm -rf ${default_model_download_path}/re_id_model
 mkdir ${default_model_download_path}/re_id_model
 wget --no-check-certificate ${ngc_re_identification} -O ${default_model_download_path}/re_id_model/resnet50_market1501.etlt
-
-# Download changeformer onnx file
-rm -rf ${default_model_download_path}/changeformer_model
-mkdir ${default_model_download_path}/changeformer_model
-pip3 install gdown
-gdown https://drive.google.com/uc?id=1z8enM25dezaSHCmHlNaGMtlURga6-66x -O ${default_model_download_path}/changeformer_model/changeformer.onnx
-
+ngc registry model download-version $ngc_visual_changenet --dest ${default_model_download_path}
+mv changenet_segmentation_v${visual_changenet_version} visual_changenet_segmentation_tao
 rm -rf ${default_model_download_path}/*.zip
 
 # Run the server container.

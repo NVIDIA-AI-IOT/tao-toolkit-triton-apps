@@ -35,13 +35,13 @@ from tao_triton.python.model.triton_model import TritonModel
 CHANNEL_MODES = ["rgb", "bgr", "l"]
 
 
-class ChangeFormerModel(TritonModel):
+class VisualChangeNetModel(TritonModel):
     """Simple class to run model inference using Triton client."""
 
     def __init__(self, max_batch_size, input_names, output_names,
                  channels, height, width, data_format,
                  triton_dtype, channel_mode="RGB"):
-        """Set up a changeformer triton model instance.
+        """Set up a visual_changenet triton model instance.
         
         Args:
             max_batch_size(int): The maximum batch size of the TensorRT engine.
@@ -58,7 +58,7 @@ class ChangeFormerModel(TritonModel):
                 "RGB" or "BGR"
                 
         Returns:
-            An instance of the ChangeFormerModel.
+            An instance of the VisualChangeNetModel.
         """
         super().__init__(max_batch_size, input_names, output_names,
                          channels, height, width, data_format,
