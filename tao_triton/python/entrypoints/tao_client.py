@@ -80,7 +80,7 @@ TRITON_MODEL_DICT = {
     "multitask_classification":MultitaskClassificationModel,
     "pose_classification":PoseClassificationModel,
     "re_identification":ReIdentificationModel,
-    "visual_changenet": VisualChangeNetModel
+    "visualchangenet": VisualChangeNetModel
 }
 
 POSTPROCESSOR_DICT = {
@@ -93,7 +93,7 @@ POSTPROCESSOR_DICT = {
     "multitask_classification": MultitaskClassificationPostprocessor,
     "pose_classification": PoseClassificationPostprocessor,
     "re_identification": ReIdentificationPostprocessor,
-    "visual_changenet": VisualChangeNetPostprocessor,
+    "visualchangenet": VisualChangeNetPostprocessor,
 }
 
 SUPPORTED_MODELS = [
@@ -361,7 +361,7 @@ def main():
 
         # The input is a folder of images.
         if os.path.isdir(FLAGS.image_filename):
-            if FLAGS.mode.lower() == "visual_changenet":
+            if FLAGS.mode.lower() == "visualchangenet":
                 file_list_dir_a = os.path.join(
                     FLAGS.image_filename,
                     FLAGS.img_dirs[0]
@@ -393,7 +393,7 @@ def main():
                     ]
                 else:
                     raise NotImplementedError(
-                        "Expecting visual_changenet input images to be in "
+                        "Expecting visualchangenet input images to be in "
                         f"two directories with names: {FLAGS.imd_dirs}"
                     )
             else:
@@ -514,7 +514,7 @@ def main():
                     batched_image_data = repeated_data[[0], :, :, :, :]
             else:
                 repeated_image_data = []
-                if FLAGS.mode.lower() == "visual_changenet":
+                if FLAGS.mode.lower() == "visualchangenet":
                     repeated_image1_data = []
 
                 for idx in range(FLAGS.batch_size):
@@ -522,7 +522,7 @@ def main():
                     if FLAGS.mode.lower() == "yolov3" or FLAGS.mode.lower() == "retinanet":
                         img = frame._load_img()
                         repeated_image_data.append(img)
-                    elif FLAGS.mode.lower() == "visual_changenet":
+                    elif FLAGS.mode.lower() == "visualchangenet":
                         img0 = frame[0]._load_img_visual_changenet()
                         img1 = frame[1]._load_img_visual_changenet()
                         repeated_image_data.append(img0)
@@ -549,7 +549,7 @@ def main():
 
                 if max_batch_size > 0:
                     batched_image_data = np.stack(repeated_image_data, axis=0)
-                    if FLAGS.mode.lower() == "visual_changenet":
+                    if FLAGS.mode.lower() == "visualchangenet":
                         batched_image1_data = np.stack(repeated_image1_data, axis=0)
                         batched_image_data = [batched_image_data, batched_image1_data]
                 else:
@@ -638,7 +638,7 @@ def main():
                 postprocessor.apply(
                     response, this_id, render=True, action_data=action_data
                 )
-            elif FLAGS.mode.lower() == "visual_changenet":
+            elif FLAGS.mode.lower() == "visualchangenet":
                 postprocessor.apply(
                     response, this_id, render=True, img_name=img_name[int(this_id)-1]
                 )
