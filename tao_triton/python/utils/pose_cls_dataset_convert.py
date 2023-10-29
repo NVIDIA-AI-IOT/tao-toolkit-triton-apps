@@ -139,7 +139,9 @@ def pose_cls_dataset_convert(pose_data_file, dataset_convert_config):
             frame_start += step
 
         # Accumulate data arrays of all objects
-        data_arrays.append(data_array)
+        if data_array is not None:
+            data_arrays.append(data_array)
+            print(data_array.shape)
 
     # Update pose data for returning (removing pose metadata)
     for b in range(len(pose_data)):
@@ -151,5 +153,4 @@ def pose_cls_dataset_convert(pose_data_file, dataset_convert_config):
                 pose_data[b]["batches"][f]["objects"][p]["segment_id"] = \
                     segment_assignments.get((object_id, frame_num), -1)
                 pose_data[b]["batches"][f]["objects"][p]["action"] = ""
-
     return np.concatenate(data_arrays, axis=0), pose_data
