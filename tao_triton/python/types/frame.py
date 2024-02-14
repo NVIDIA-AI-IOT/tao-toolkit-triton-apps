@@ -254,3 +254,67 @@ class Frame(object):
         img = np.asarray(Image.open(self._image_path).convert('RGB'))
         [img] = preprocess_input_cf([img], self.w, self.h, to_tensor=True)
         return np.asarray(img)
+
+    def _load_img_centerpose(self):
+        """load an image and returns the original image and a numpy array for model to consume.
+
+        Args:
+            img_path (str): path to an image
+        Returns:
+            img (PIL.Image): PIL image of original image.
+            ratio (float): resize ratio of original image over processed image
+            inference_input (array): numpy array for processed image
+        """
+
+        img = Image.open(self._image_path)
+        orig_w, orig_h = img.size
+        ratio = min(self.w/float(orig_w), self.h/float(orig_h))
+
+        # do not change aspect ratio
+        new_w = int(round(orig_w*ratio))
+        new_h = int(round(orig_h*ratio))
+
+        # Calculate the position to paste the resized image into the center of the black image
+        x_offset = (self.w - new_w) // 2
+        y_offset = (self.h - new_h) // 2
+
+        if self.keep_aspect_ratio:
+            im = img.resize((new_w, new_h), Image.ANTIALIAS)
+        else:
+            im = img.resize((self.w, self.h), Image.ANTIALIAS)
+
+        if im.mode in ('RGBA', 'LA') or \
+                (im.mode == 'P' and 'transparency' in im.info) and \
+                self.model_img_mode == 'L' :
+
+            # Need to convert to RGBA if LA format due to a bug in PIL
+            im = im.convert('RGBA')
+            inf_img = Image.new("RGBA", (self.w, self.h))
+            inf_img.paste(im, (x_offset, y_offset))
+            inf_img = inf_img.convert(self.model_img_mode)
+        else:
+            inf_img = Image.new(
+                self.model_img_mode,
+                (self.w, self.h)
+            )
+            
+            inf_img.paste(im, (x_offset, y_offset))
+
+        inference_input = np.array(inf_img).astype(np.float32)
+
+        inference_input = inference_input.transpose(2, 0, 1)
+        inference_input /= 255.
+        mean = [0.40789654, 0.44719302, 0.47026115]
+        std = [0.28863828, 0.27408164, 0.27809835]
+        # Zero-center by mean pixel
+        for idx in range(len(mean)):
+            if inference_input.ndim == 3:
+                inference_input[idx, :, :] -= mean[idx]
+                if std is not None:
+                    inference_input[idx, :, :] /= std[idx]
+            else:
+                inference_input[:, idx, :, :] -= mean[idx]
+                if std is not None:
+                    inference_input[:, idx, :, :] /= std[idx]
+
+        return inference_input
