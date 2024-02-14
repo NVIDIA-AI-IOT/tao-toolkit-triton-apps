@@ -35,3 +35,19 @@ message PostprocessingConfig {
     int32 linewidth = 2;
     int32 stride = 3;
 }
+
+// Create a dictionary of post processing config for CenterPose.
+message CenterPoseConfig {
+    // CenterPose post processing config, intrinsic matrix.
+    float visualization_threshold = 1;
+    float principle_point_x = 2;
+    float principle_point_y = 3;
+    float focal_length_x = 4;
+    float focal_length_y = 5;
+    float skew = 6;
+    // CenterPose visualization parameters.
+    float axis_size = 7;
+    int32 square_size = 8;
+    int32 line_weight = 9;
+    float scale_text = 10;
+}

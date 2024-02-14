@@ -36,6 +36,9 @@
   - [VisualChangeNet](docs/configuring_the_client.md#visual_changenet)
     - [Configuring the Re_identification model entry in the model repository](docs/configuring_the_client.md#configuring-the-visual-changenet-model-entry-in-the-model-repository)
     - [Configuring the Visual ChangeNet model Post-processor](docs/configuring_the_client.md#configuring-the-visual-changenet-model-post-processor)
+  - [CenterPose](docs/configuring_the_client.md#centerpose)
+    - [Configuring the CenterPose model entry in the model repository](docs/configuring_the_client.md#configuring-the-centerpose-model-entry-in-the-model-repository)
+    - [Configuring the CenterPose model Post-processor](docs/configuring_the_client.md#configuring-the-centerpose-model-post-processor)
 
 NVIDIA Train Adapt Optimize (TAO) Toolkit, provides users an easy interface to generate accurate and optimized models
 for computer vision and conversational AI use cases. These models are generally deployed via the DeepStream SDK or
@@ -54,6 +57,7 @@ we provide reference applications for 6 computer vision models and 1 character r
 - Pose Classification
 - Re-Identification
 - VisualChangeNet
+- CenterPose
 
 Triton is an NVIDIA developed inference software solution to efficiently deploy Deep Neural Networks (DNN) developed
 across several frameworks, for example TensorRT, Tensorflow, and ONNXRuntime. Triton Inference Server runs multiple
@@ -176,6 +180,7 @@ This sample walks through setting up instances of inferencing the following mode
 9. Pose_classification
 10. Re_identification
 11. VisualChangeNet
+12. CenterPose
 
 Simply run the quick start script:
 
@@ -186,13 +191,13 @@ Simply run the quick start script:
 ### Running the client samples
 
 The Triton client to serve run TAO Toolkit models is implemented in the `${TAO_TRITON_REPO_ROOT}/tao_triton/python/entrypoints/tao_client.py`.
-This implementation is a reference example run to `detectnet_v2` , `classification` ,`LPRNet` , `YOLOv3` , `Peoplesegnet` , `Retinanet` , `Multitask_classification`, `Pose_classification` and `VisualChangeNet`.
+This implementation is a reference example run to `detectnet_v2` , `classification` ,`LPRNet` , `YOLOv3` , `Peoplesegnet` , `Retinanet` , `Multitask_classification`, `Pose_classification`, `VisualChangeNet` and `CenterPose`.
 
 The CLI options for this client application are as follows:
 
 ```text
 usage: tao_client.py [-h] [-v] [-a] [--streaming] -m MODEL_NAME [-x MODEL_VERSION] [-b BATCH_SIZE]
-                     [--mode {Classification,DetectNet_v2,LPRNet,YOLOv3,Peoplesegnet,Retinanet,Multitask_classification,Pose_classification,Re_identification,VisualChangeNet}]
+                     [--mode {Classification,DetectNet_v2,LPRNet,YOLOv3,Peoplesegnet,Retinanet,Multitask_classification,Pose_classification,Re_identification,VisualChangeNet,CenterPose}]
                      [--img_dirs IMG_DIRS] [-u URL] [-i PROTOCOL] [--class_list CLASS_LIST] --output_path OUTPUT_PATH [--postprocessing_config POSTPROCESSING_CONFIG]
                      [--dataset_convert_config DATASET_CONVERT_CONFIG] [--test_dir TEST_DIR]
                      [image_filename]
@@ -211,7 +216,7 @@ optional arguments:
                         Version of model. Default is to use latest version.
   -b BATCH_SIZE, --batch-size BATCH_SIZE
                         Batch size. Default is 1.
-  --mode {Classification,DetectNet_v2,LPRNet,YOLOv3,Peoplesegnet,Retinanet,Multitask_classification,Pose_classification,Re_identification,VisualChangeNet}
+  --mode {Classification,DetectNet_v2,LPRNet,YOLOv3,Peoplesegnet,Retinanet,Multitask_classification,Pose_classification,Re_identification,VisualChangeNet,CenterPose}
                         Type of scaling to apply to image pixels. Default is NONE.
   --img_dirs IMG_DIRS   Relative directory names for Siamese network input images
   -u URL, --url URL     Inference server URL. Default is localhost:8000.
@@ -478,3 +483,23 @@ python tao_triton/python/entrypoints/tao_client.py \
 ```
 
 The infered images are generated in the `/path/to/the/output/directory/`
+
+ 12. For running CenterPose model, the command line would be as follows:
+
+- Note that please make sure the camera calibration infomation is correct before running the command line in `clustering_config_centerpose.prototxt`. 
+
+```sh
+python tao_triton/python/entrypoints/tao_client.py \
+       /path/to/a/directory/of/images \
+       -m centerpose_tao \
+       -x 1 \
+       -b 1 \
+       --mode CenterPose \
+       -i https \
+       -u localhost:8000 \
+       --async \
+       --output_path /path/to/the/output/directory \
+       --postprocessing_config $tao_triton_root/tao_triton/python/clustering_specs/clustering_config_centerpose.prototxt
+```
+
+The infered images and the related json files are generated in the `/path/to/the/output/directory/`

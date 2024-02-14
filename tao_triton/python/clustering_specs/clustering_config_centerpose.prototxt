@@ -1,0 +1,10 @@
+visualization_threshold: 0.3
+principle_point_x: 300.3225504557292
+principle_point_y: 400.1635182698568
+focal_length_x: 654.2994384765625
+focal_length_y: 654.2994384765625
+skew: 0.0
+axis_size: 0.5
+square_size: 10
+line_weight: 2
+scale_text: 0.5

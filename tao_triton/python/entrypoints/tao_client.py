@@ -54,6 +54,7 @@ from tao_triton.python.postprocessing.retinanet_postprocessor import RetinanetPo
 from tao_triton.python.postprocessing.multitask_classification_postprocessor import MultitaskClassificationPostprocessor
 from tao_triton.python.postprocessing.pose_classification_postprocessor import PoseClassificationPostprocessor
 from tao_triton.python.postprocessing.re_identification_postprocessor import ReIdentificationPostprocessor
+from tao_triton.python.postprocessing.centerpose_postprocessor import CenterPosePostprocessor
 from tao_triton.python.utils.kitti import write_kitti_annotation
 from tao_triton.python.utils.pose_cls_dataset_convert import pose_cls_dataset_convert
 from tao_triton.python.model.detectnet_model import DetectnetModel
@@ -66,6 +67,7 @@ from tao_triton.python.model.multitask_classification_model import MultitaskClas
 from tao_triton.python.model.pose_classification_model import PoseClassificationModel
 from tao_triton.python.model.re_identification_model import ReIdentificationModel
 from tao_triton.python.model.visual_changenet_model import VisualChangeNetModel
+from tao_triton.python.model.centerpose_model import CenterPoseModel
 
 
 logger = logging.getLogger(__name__)
@@ -80,7 +82,8 @@ TRITON_MODEL_DICT = {
     "multitask_classification":MultitaskClassificationModel,
     "pose_classification":PoseClassificationModel,
     "re_identification":ReIdentificationModel,
-    "visualchangenet": VisualChangeNetModel
+    "visualchangenet": VisualChangeNetModel,
+    "centerpose": CenterPoseModel
 }
 
 POSTPROCESSOR_DICT = {
@@ -94,6 +97,7 @@ POSTPROCESSOR_DICT = {
     "pose_classification": PoseClassificationPostprocessor,
     "re_identification": ReIdentificationPostprocessor,
     "visualchangenet": VisualChangeNetPostprocessor,
+    "centerpose": CenterPosePostprocessor
 }
 
 SUPPORTED_MODELS = [
@@ -106,7 +110,8 @@ SUPPORTED_MODELS = [
     "Multitask_classification",
     "Pose_classification",
     "Re_identification",
-    "VisualChangeNet"
+    "VisualChangeNet",
+    "CenterPose"
 ]
 
 
@@ -158,7 +163,7 @@ def request_generator(
         client = httpclient
 
     input_array=[]
-    if len(input_name) > 1:
+    if isinstance(input_name, list):
         for i in range(len(input_name)):
             #To sanity check multi-input visualisation. 
             # vis_inputs(batched_image_data[i], output_path, i)
@@ -401,20 +406,12 @@ def main():
                 for f in os.listdir(FLAGS.image_filename):
                     if os.path.isfile(os.path.join(FLAGS.image_filename, f)) and os.path.splitext(f)[-1] in [".jpg", ".jpeg", ".png"]:
                         frames.append(
-                            [
-                                Frame(
-                                    os.path.join(FLAGS.image_filename, f),
-                                    triton_model.data_format,
-                                    npdtype,
-                                    target_shape
-                                ),
-                                Frame(
-                                    os.path.join(FLAGS.image_filename, f),
-                                    triton_model.data_format,
-                                    npdtype,
-                                    target_shape
-                                )
-                            ]
+                            Frame(
+                                os.path.join(FLAGS.image_filename, f),
+                                triton_model.data_format,
+                                npdtype,
+                                target_shape
+                            )
                         )
 
             if FLAGS.mode.lower() == "re_identification":
@@ -472,6 +469,8 @@ def main():
         ]
         if FLAGS.mode.lower() == "detectnet_v2":
             args_postprocessor.extend([class_list, FLAGS.postprocessing_config, target_shape])
+        elif FLAGS.mode.lower() == "centerpose":
+            args_postprocessor.extend([FLAGS.postprocessing_config])
     postprocessor = POSTPROCESSOR_DICT[FLAGS.mode.lower()](*args_postprocessor)
 
     # Holds the handles to the ongoing HTTP async requests.
@@ -535,6 +534,9 @@ def main():
                         repeated_image_data.append(img)
                     elif FLAGS.mode.lower() == "re_identification":
                         img = frame._load_img_re_identification()
+                        repeated_image_data.append(img)
+                    elif FLAGS.mode.lower() == "centerpose":
+                        img = frame._load_img_centerpose()
                         repeated_image_data.append(img)
                     else:
                         img = frame.load_image()
@@ -641,6 +643,10 @@ def main():
             elif FLAGS.mode.lower() == "visualchangenet":
                 postprocessor.apply(
                     response, this_id, render=True, img_name=img_name[int(this_id)-1]
+                )
+            elif FLAGS.mode.lower() == "centerpose":
+                postprocessor.apply(
+                    response, this_id, render=True, img_name=frames[FLAGS.batch_size*processed_request:FLAGS.batch_size*(processed_request+1)]
                 )
             else:
                 postprocessor.apply(

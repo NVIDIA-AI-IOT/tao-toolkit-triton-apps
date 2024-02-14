@@ -30,6 +30,9 @@
 - [VisualChangeNet](#visualchangenet)
   - [Configuring the VisualChangeNet model entry in the model repository](#configuring-the-visualchangenet-model-entry-in-the-model-repository)
   - [Configuring the Post-processor](#configuring-the-visualchangenet-model-post-processor)
+- [CenterPose](#centerpose)
+  - [Configuring the CenterPose model entry in the model repository](#configuring-the-centerpose-model-entry-in-the-model-repository)
+  - [Configuring the Post-processor](#configuring-the-centerpose-model-post-processor)
 
 The inference client samples provided in this provide several parameters that the user can configure.
 This section elaborates about those parameters in more detail.
@@ -953,3 +956,132 @@ that is being served. As seen in the sample, a Re_identification model has 1 inp
 ### Configuring the Re_identification model Post-processor
 
 Refer to `model_repository/re_identification_tao` folder. 
+
+## CenterPose
+
+1. [Model Repository](#configuring-the-centerpose-model-entry-in-the-model-repository)
+2. [Configuring the CenterPose model Post-processor](#configuring-the-centerpose-model-post-processor)
+
+### Configuring the CenterPose model entry in the model repository
+
+The model repository is the location on the Triton Server, where the model served from. Triton expects the models
+in the model repository to be follow the layout defined [here](https://github.com/triton-inference-server/server/blob/main/docs/model_repository.md#repository-layout).
+
+A sample model repository for an CenterPose model would have the following contents.
+
+```text
+model_repository_root/
+    centerpose_tao/
+        config.pbtxt
+        1/
+            model.plan
+```
+
+The `config.pbtxt` file, describes the model configuration for the model. A sample model configuration file for the CenterPose model would look like this.
+
+```proto
+name: "centerpose_tao"
+platform: "tensorrt_plan"
+max_batch_size: 16
+input [
+  {
+    name: "input"
+    data_type: TYPE_FP32
+    format: FORMAT_NCHW
+    dims: [ 3, 512, 512 ]
+  }
+]
+output [
+  {
+    name: "bboxes"
+    data_type: TYPE_FP32
+    dims: [ 100, 4 ]
+  },
+  {
+    name: "scores"
+    data_type: TYPE_FP32
+    dims: [ 100, 1 ]
+  },
+  {
+    name: "kps"
+    data_type: TYPE_FP32
+    dims: [ 100, 16 ]
+  },
+  {
+    name: "clses"
+    data_type: TYPE_FP32
+    dims: [ 100, 1 ]
+  },
+  {
+    name: "obj_scale"
+    data_type: TYPE_FP32
+    dims: [ 100, 3 ]
+  },
+  {
+    name: "kps_displacement_mean"
+    data_type: TYPE_FP32
+    dims: [ 100, 16 ]
+  },
+  {
+    name: "kps_heatmap_mean"
+    data_type: TYPE_FP32
+    dims: [ 100, 16 ]
+  }
+]
+dynamic_batching { }
+
+```
+
+The following table explains the parameters in the config.pbtxt
+
+| **Parameter Name** | **Description** | **Type**  | **Supported Values**| **Sample Values**|
+| :----              | :-------------- | :-------: | :------------------ | :--------------- |
+| name | The user readable name of the served model | string |   | centerpose_tao|
+| platform | The backend used to parse and run the model | string | tensorrt_plan | tensorrt_plan |
+| max_batch_size | The maximum batch size used to create the TensorRT engine.<br>This should be the same as the `max_batch_size` parameter of the `onnx` exported (1 for now)| int | 1 | 16 |
+| input | Configuration elements for the input nodes | list of protos/node |  |  |
+| output | Configuration elements for the output nodes | list of protos/node |  |  |
+| dynamic_batching | Configuration element to enable [dynamic batching](https://github.com/triton-inference-server/server/blob/main/docs/model_configuration.md#dynamic-batcher) using Triton | proto element |  |  |
+
+The input and output elements in the config.pbtxt provide the configurable parameters for the input and output nodes of the model that is being served. As seen in the sample, a CenterPose model has 1 input node `input` and 7 output nodes `bboxes` , `scores` , `kps`, `clses`, `obj_scale`, `kps_displacement_mean` and `kps_heatmap_mean`.
+
+### Configuring the CenterPose model Post-processor
+
+The CenterPose model generates raw output tensors which needs to be post-processed to generate the 3D
+bounding boxes and object pose. The reference implementation of the post-processor is defined in the [here](../python/postprocessing/centerpose_postprocessor.py).
+
+A sample configuration file to configure the postprocessor module of the `CenterPose` look as shown below
+
+```proto
+visualization_threshold: 0.3
+principle_point_x: 300.3
+principle_point_y: 400.1
+focal_length_x: 654.2
+focal_length_y: 654.2
+skew: 0.0
+axis_size: 0.5
+square_size: 10
+line_weight: 2
+scale_text: 0.5
+```
+
+The following table explains the configurable elements of the postprocessor plugin.
+
+| **Parameter Name** | **Description** | **Type**  | **Supported Values**| **Sample Values**|
+| :----              | :-------------- | :-------: | :------------------ | :--------------- |
+| visualization_threshold | Confidence threshold to filter predictions  | float | [0,1] | 0.3 |
+| principle_point_x | The principle point x of the intrinsic matrix | float | >0 | 300.3 |
+| principle_point_y | The principle point y of the intrinsic matrix | float | >0 | 400.1 |
+| focal_length_x | The focal length x of the intrinsic matrix | float | >0 | 654.2 |
+| focal_length_y | The focal length y of the intrinsic matrix | float | >0 | 654.2 |
+| skew | The skew of the intrinsic matrix | float | >=0 | 0.0 |
+| axis_size | The size of the object pose. The `+y` is up (aligned with the gravity, green line); The `+x` follows right hand rule (red line); The `+z` is the front face (blue line) | float | >0 | 0.5 |
+| square_size | The size of the bounding box corner | int | >=0 | 15 |
+| line_weight | The line weights of the 3D bounding box and the pose line | int | >0 | 2 |
+| scale_text | The size of the text on the top left corner. `x/y/z` refers to the relative dimension of the objects | float | >0 | 0.5 |
+
+> Note:
+> Please use the correct camera calibration matrix along with your data.
+> Please configure the appropriate visualization settings by adjusting `axis_size`, `square_size`, `line_weight`, and `scale_text`. A large testing image may require a larger scale value for optimal visualization.  
+
+The post processor configuration in a protobuf file, who's schema is defined in this [file](../python/proto/postprocessor_config.proto).

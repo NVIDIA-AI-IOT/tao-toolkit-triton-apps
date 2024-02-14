@@ -114,4 +114,13 @@ mkdir -p /model_repository/visual_changenet_segmentation_tao/1
 trtexec --onnx=/tao_models/visual_changenet_segmentation_tao/changenet_segment.onnx  \
         --saveEngine=/model_repository/visual_changenet_segmentation_tao/1/model.plan
 
+# Generate a CenterPose model
+echo "Converting the CenterPose model"
+mkdir -p /model_repository/centerpose_tao/1
+trtexec --onnx=/tao_models/centerpose_model/bottle_FAN_small.onnx \
+        --maxShapes="input":16x3x512x512 \
+        --minShapes="input":1x3x512x512 \
+        --optShapes="input":8x3x512x512 \
+        --saveEngine=/model_repository/centerpose_tao/1/model.plan
+
 /opt/tritonserver/bin/tritonserver --model-store /model_repository
