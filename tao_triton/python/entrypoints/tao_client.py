@@ -55,6 +55,7 @@ from tao_triton.python.postprocessing.multitask_classification_postprocessor imp
 from tao_triton.python.postprocessing.pose_classification_postprocessor import PoseClassificationPostprocessor
 from tao_triton.python.postprocessing.re_identification_postprocessor import ReIdentificationPostprocessor
 from tao_triton.python.postprocessing.centerpose_postprocessor import CenterPosePostprocessor
+from tao_triton.python.postprocessing.foundationpose_postprocessor import FoundationposePostprocessor
 from tao_triton.python.utils.kitti import write_kitti_annotation
 from tao_triton.python.utils.pose_cls_dataset_convert import pose_cls_dataset_convert
 from tao_triton.python.model.detectnet_model import DetectnetModel
@@ -68,6 +69,7 @@ from tao_triton.python.model.pose_classification_model import PoseClassification
 from tao_triton.python.model.re_identification_model import ReIdentificationModel
 from tao_triton.python.model.visual_changenet_model import VisualChangeNetModel
 from tao_triton.python.model.centerpose_model import CenterPoseModel
+from tao_triton.python.model.foundationpose_model import FoundationposeModel
 
 
 logger = logging.getLogger(__name__)
@@ -83,7 +85,8 @@ TRITON_MODEL_DICT = {
     "pose_classification":PoseClassificationModel,
     "re_identification":ReIdentificationModel,
     "visualchangenet": VisualChangeNetModel,
-    "centerpose": CenterPoseModel
+    "centerpose": CenterPoseModel,
+    "foundationpose": FoundationposeModel
 }
 
 POSTPROCESSOR_DICT = {
@@ -97,7 +100,8 @@ POSTPROCESSOR_DICT = {
     "pose_classification": PoseClassificationPostprocessor,
     "re_identification": ReIdentificationPostprocessor,
     "visualchangenet": VisualChangeNetPostprocessor,
-    "centerpose": CenterPosePostprocessor
+    "centerpose": CenterPosePostprocessor,
+    "foundationpose": FoundationposePostprocessor
 }
 
 SUPPORTED_MODELS = [
@@ -111,7 +115,8 @@ SUPPORTED_MODELS = [
     "Pose_classification",
     "Re_identification",
     "VisualChangeNet",
-    "CenterPose"
+    "CenterPose",
+    "Foundationpose"
 ]
 
 
@@ -231,10 +236,8 @@ def parse_command_line(args=None):
                         default='NONE',
                         help='Type of scaling to apply to image pixels. Default is NONE.')
     parser.add_argument('--img_dirs',
-                        type=list,
                         required=False,
                         action='append',
-                        default=['A', 'B'],
                         help='Relative directory names for Siamese network input images')
     parser.add_argument('-u',
                         '--url',
@@ -276,6 +279,18 @@ def parse_command_line(args=None):
                         type=str,
                         default="",
                         help="Path to the Re Identification test image directory.")
+    parser.add_argument("--obj_file",
+                        type=str,
+                        default="",
+                        help="Path to CAD model with OBJ format.")
+    parser.add_argument("--intrinsic_file",
+                        type=str,
+                        default="",
+                        help="Path to the intrinsic matrix txt file.")
+    parser.add_argument("--bbox",
+                        type=str,
+                        default="",
+                        help="2d bounding box (umin,vmin,umax,vmax) for the initialization of FoundationPose.")
     return parser.parse_args()
 
 
@@ -314,31 +329,69 @@ def main():
 
     # Make sure the model matches our requirements, and get some
     # properties of the model that we need for preprocessing
-    try:
-        model_metadata = triton_client.get_model_metadata(
-            model_name=FLAGS.model_name,
-            model_version=FLAGS.model_version
-        )
-    except InferenceServerException as exc:
-        print("failed to retrieve the metadata: " + str(exc))
-        sys.exit(1)
+    if FLAGS.mode.lower() == 'foundationpose':
+        model_names = FLAGS.model_name.split(',')
+        try:
+            modelA_metadata = triton_client.get_model_metadata(
+                    model_name=model_names[0],
+                    model_version=FLAGS.model_version
+                )
+            modelB_metadata = triton_client.get_model_metadata(
+                    model_name=model_names[1],
+                    model_version=FLAGS.model_version
+                )
+        except InferenceServerException as exc:
+            print("failed to retrieve the metadata: " + str(exc))
+            sys.exit(1)
 
-    try:
-        model_config = triton_client.get_model_config(
-            model_name=FLAGS.model_name, model_version=FLAGS.model_version)
-    except InferenceServerException as exc:
-        print("failed to retrieve the config: " + str(exc))
-        sys.exit(1)
+        try:
+            modelA_config = triton_client.get_model_config(
+                    model_name=model_names[0], model_version=FLAGS.model_version)
+            modelB_config = triton_client.get_model_config(
+                    model_name=model_names[1], model_version=FLAGS.model_version)
+        except InferenceServerException as exc:
+            print("failed to retrieve the config: " + str(exc))
+            sys.exit(1)
 
-    if FLAGS.protocol.lower() == "grpc":
-        model_config = model_config.config
+        if FLAGS.protocol.lower() == "grpc":
+            modelA_config = modelA_config.config
+            modelB_config = modelB_config.config
+        else:
+            modelA_metadata, modelA_config = convert_http_metadata_config(
+                modelA_metadata, modelA_config
+            )
+            modelB_metadata, modelB_config = convert_http_metadata_config(
+                modelB_metadata, modelB_config
+            )
+        max_batch_size = -1
+        triton_model = TRITON_MODEL_DICT[FLAGS.mode.lower()].from_metadata(modelA_metadata, modelA_config, modelB_metadata, modelB_config)
+        triton_model.preprocess(triton_client, FLAGS.obj_file, FLAGS.intrinsic_file)
     else:
-        model_metadata, model_config = convert_http_metadata_config(
-            model_metadata, model_config
-        )
+        try:
+            model_metadata = triton_client.get_model_metadata(
+                model_name=FLAGS.model_name,
+                model_version=FLAGS.model_version
+            )
+        except InferenceServerException as exc:
+            print("failed to retrieve the metadata: " + str(exc))
+            sys.exit(1)
 
-    triton_model = TRITON_MODEL_DICT[FLAGS.mode.lower()].from_metadata(model_metadata, model_config)
-    max_batch_size = triton_model.max_batch_size
+        try:
+            model_config = triton_client.get_model_config(
+                model_name=FLAGS.model_name, model_version=FLAGS.model_version)
+        except InferenceServerException as exc:
+            print("failed to retrieve the config: " + str(exc))
+            sys.exit(1)
+
+        if FLAGS.protocol.lower() == "grpc":
+            model_config = model_config.config
+        else:
+            model_metadata, model_config = convert_http_metadata_config(
+                model_metadata, model_config
+            )
+
+        triton_model = TRITON_MODEL_DICT[FLAGS.mode.lower()].from_metadata(model_metadata, model_config)
+        max_batch_size = triton_model.max_batch_size
     pose_sequences = None
     frames = []
     test_frames = []
@@ -359,6 +412,34 @@ def main():
         else:
             raise NotImplementedError(
                 "The input for Pose Classification has to be a JSON file or a NumPy array."
+            )
+    elif FLAGS.mode.lower() == "foundationpose":
+        # The input is a folder of images.
+        file_list_dir_rgb = os.path.join(
+            FLAGS.image_filename,
+            FLAGS.img_dirs[0]
+        )
+        file_list_dir_depth = os.path.join(
+            FLAGS.image_filename,
+            FLAGS.img_dirs[1]
+        )
+        if os.path.exists(file_list_dir_rgb) and os.path.exists(file_list_dir_depth):
+            img_name = [f for f in sorted(os.listdir(file_list_dir_rgb))]
+            frames = [
+                    Frame(
+                        os.path.join(file_list_dir_rgb, f),
+                        mc.ModelInput.FORMAT_NCHW,
+                        None,
+                        np.ones((3))
+                    )
+                for f in img_name
+                if os.path.isfile(os.path.join(file_list_dir_rgb, f)) and
+                os.path.splitext(f)[-1] in [".jpg", ".jpeg", ".png"]
+            ]
+        else:
+            raise NotImplementedError(
+                "Expecting foundationpose input images to be in "
+                f"two directories with names: {FLAGS.img_dirs}"
             )
     else:
         target_shape = (triton_model.c, triton_model.h, triton_model.w)
@@ -463,6 +544,10 @@ def main():
         args_postprocessor = [
             FLAGS.batch_size, frames, test_frames, FLAGS.output_path, triton_model.data_format
         ]
+    elif FLAGS.mode.lower() == "foundationpose":
+        args_postprocessor = [
+            FLAGS.output_path
+        ]
     else:
         args_postprocessor = [
             FLAGS.batch_size, frames, FLAGS.output_path, triton_model.data_format
@@ -538,6 +623,9 @@ def main():
                     elif FLAGS.mode.lower() == "centerpose":
                         img = frame._load_img_centerpose()
                         repeated_image_data.append(img)
+                    elif FLAGS.mode.lower() == "foundationpose":
+                        img = frame._load_img_foundationpose(file_list_dir_depth)
+                        repeated_image_data.append(img)
                     else:
                         img = frame.load_image()
                         repeated_image_data.append(
@@ -559,46 +647,51 @@ def main():
 
             # Send request
             try:
-                req_gen_args = [batched_image_data, triton_model.input_names,
-                    triton_model.output_names, triton_model.triton_dtype,
-                    FLAGS.protocol.lower()]
-                req_gen_kwargs = {}
-                if FLAGS.mode.lower() in ["classification", "pose_classification"]:
-                    req_gen_kwargs["num_classes"] = model_config.output[0].dims[0]
-                req_generator = request_generator(*req_gen_args, **req_gen_kwargs)
-                for inputs, outputs in req_generator:
+                if FLAGS.mode.lower() == "foundationpose":
+                    viz = triton_model.process(batched_image_data, sent_count, modelA_metadata, modelB_metadata, FLAGS.bbox)
                     sent_count += 1
-                    if FLAGS.streaming:
-                        triton_client.async_stream_infer(
-                            FLAGS.model_name,
-                            inputs,
-                            request_id=str(sent_count),
-                            model_version=FLAGS.model_version,
-                            outputs=outputs)
-                    elif FLAGS.async_set:
-                        if FLAGS.protocol.lower() == "grpc":
-                            triton_client.async_infer(
+                    responses.append(viz)
+                else:
+                    req_gen_args = [batched_image_data, triton_model.input_names,
+                        triton_model.output_names, triton_model.triton_dtype,
+                        FLAGS.protocol.lower()]
+                    req_gen_kwargs = {}
+                    if FLAGS.mode.lower() in ["classification", "pose_classification"]:
+                        req_gen_kwargs["num_classes"] = model_config.output[0].dims[0]
+                    req_generator = request_generator(*req_gen_args, **req_gen_kwargs)
+                    for inputs, outputs in req_generator:
+                        sent_count += 1
+                        if FLAGS.streaming:
+                            triton_client.async_stream_infer(
                                 FLAGS.model_name,
                                 inputs,
-                                partial(completion_callback, user_data),
                                 request_id=str(sent_count),
                                 model_version=FLAGS.model_version,
                                 outputs=outputs)
-                        else:
-                            async_requests.append(
+                        elif FLAGS.async_set:
+                            if FLAGS.protocol.lower() == "grpc":
                                 triton_client.async_infer(
                                     FLAGS.model_name,
                                     inputs,
+                                    partial(completion_callback, user_data),
                                     request_id=str(sent_count),
                                     model_version=FLAGS.model_version,
-                                    outputs=outputs))
-                    else:
-                        responses.append(
-                            triton_client.infer(FLAGS.model_name,
-                                                inputs,
-                                                request_id=str(sent_count),
-                                                model_version=FLAGS.model_version,
-                                                outputs=outputs))
+                                    outputs=outputs)
+                            else:
+                                async_requests.append(
+                                    triton_client.async_infer(
+                                        FLAGS.model_name,
+                                        inputs,
+                                        request_id=str(sent_count),
+                                        model_version=FLAGS.model_version,
+                                        outputs=outputs))
+                        else:
+                            responses.append(
+                                triton_client.infer(FLAGS.model_name,
+                                                    inputs,
+                                                    request_id=str(sent_count),
+                                                    model_version=FLAGS.model_version,
+                                                    outputs=outputs))
 
             except InferenceServerException as exc:
                 print("inference failed: " + str(exc))
@@ -632,10 +725,13 @@ def main():
     with tqdm(total=len(frames)) as pbar:
         while processed_request < sent_count:
             response = responses[processed_request]
-            if FLAGS.protocol.lower() == "grpc":
-                this_id = response.get_response().id
+            if FLAGS.mode.lower() == "foundationpose":
+                this_id = processed_request
             else:
-                this_id = response.get_response()["id"]
+                if FLAGS.protocol.lower() == "grpc":
+                    this_id = response.get_response().id
+                else:
+                    this_id = response.get_response()["id"]
             if os.path.splitext(FLAGS.image_filename)[-1] == ".json":
                 postprocessor.apply(
                     response, this_id, render=True, action_data=action_data

@@ -39,6 +39,8 @@
   - [CenterPose](docs/configuring_the_client.md#centerpose)
     - [Configuring the CenterPose model entry in the model repository](docs/configuring_the_client.md#configuring-the-centerpose-model-entry-in-the-model-repository)
     - [Configuring the CenterPose model Post-processor](docs/configuring_the_client.md#configuring-the-centerpose-model-post-processor)
+  - [FoundationPose](docs/configuring_the_client.md#foundationpose)
+    - [Configuring the FoundationPose model entry in the model repository](docs/configuring_the_client.md#configuring-the-foundationpose-model-entry-in-the-model-repository)
 
 NVIDIA Train Adapt Optimize (TAO) Toolkit, provides users an easy interface to generate accurate and optimized models
 for computer vision and conversational AI use cases. These models are generally deployed via the DeepStream SDK or
@@ -58,6 +60,7 @@ we provide reference applications for 6 computer vision models and 1 character r
 - Re-Identification
 - VisualChangeNet
 - CenterPose
+- FoundationPose
 
 Triton is an NVIDIA developed inference software solution to efficiently deploy Deep Neural Networks (DNN) developed
 across several frameworks, for example TensorRT, Tensorflow, and ONNXRuntime. Triton Inference Server runs multiple
@@ -181,6 +184,7 @@ This sample walks through setting up instances of inferencing the following mode
 10. Re_identification
 11. VisualChangeNet
 12. CenterPose
+13. FoundationPose
 
 Simply run the quick start script:
 
@@ -191,13 +195,13 @@ Simply run the quick start script:
 ### Running the client samples
 
 The Triton client to serve run TAO Toolkit models is implemented in the `${TAO_TRITON_REPO_ROOT}/tao_triton/python/entrypoints/tao_client.py`.
-This implementation is a reference example run to `detectnet_v2` , `classification` ,`LPRNet` , `YOLOv3` , `Peoplesegnet` , `Retinanet` , `Multitask_classification`, `Pose_classification`, `VisualChangeNet` and `CenterPose`.
+This implementation is a reference example run to `detectnet_v2` , `classification` ,`LPRNet` , `YOLOv3` , `Peoplesegnet` , `Retinanet` , `Multitask_classification`, `Pose_classification`, `VisualChangeNet`, `CenterPose` and `FoundationPose`.
 
 The CLI options for this client application are as follows:
 
 ```text
 usage: tao_client.py [-h] [-v] [-a] [--streaming] -m MODEL_NAME [-x MODEL_VERSION] [-b BATCH_SIZE]
-                     [--mode {Classification,DetectNet_v2,LPRNet,YOLOv3,Peoplesegnet,Retinanet,Multitask_classification,Pose_classification,Re_identification,VisualChangeNet,CenterPose}]
+                     [--mode {Classification,DetectNet_v2,LPRNet,YOLOv3,Peoplesegnet,Retinanet,Multitask_classification,Pose_classification,Re_identification,VisualChangeNet,CenterPose,FoundationPose}]
                      [--img_dirs IMG_DIRS] [-u URL] [-i PROTOCOL] [--class_list CLASS_LIST] --output_path OUTPUT_PATH [--postprocessing_config POSTPROCESSING_CONFIG]
                      [--dataset_convert_config DATASET_CONVERT_CONFIG] [--test_dir TEST_DIR]
                      [image_filename]
@@ -216,7 +220,7 @@ optional arguments:
                         Version of model. Default is to use latest version.
   -b BATCH_SIZE, --batch-size BATCH_SIZE
                         Batch size. Default is 1.
-  --mode {Classification,DetectNet_v2,LPRNet,YOLOv3,Peoplesegnet,Retinanet,Multitask_classification,Pose_classification,Re_identification,VisualChangeNet,CenterPose}
+  --mode {Classification,DetectNet_v2,LPRNet,YOLOv3,Peoplesegnet,Retinanet,Multitask_classification,Pose_classification,Re_identification,VisualChangeNet,CenterPose,FoundationPose}
                         Type of scaling to apply to image pixels. Default is NONE.
   --img_dirs IMG_DIRS   Relative directory names for Siamese network input images
   -u URL, --url URL     Inference server URL. Default is localhost:8000.
@@ -231,6 +235,9 @@ optional arguments:
   --dataset_convert_config DATASET_CONVERT_CONFIG
                         Path to the Pose Classification dataset conversion config.
   --test_dir TEST_DIR   Path to the Re Identification test image directory.
+  --obj_file OBJ_FILE   Path to CAD model with OBJ format, only use for the object pose estimation.
+  --intrinsic_file      Path to the camera intrinsic matrix txt file.
+  --bbox                2d bounding box (umin,vmin,umax,vmax) for the initialization of FoundationPose.
 ```
 
 Assuming that a Triton inference server with a valid Detectnet_v2 TensorRT engine has
@@ -500,6 +507,33 @@ python tao_triton/python/entrypoints/tao_client.py \
        --async \
        --output_path /path/to/the/output/directory \
        --postprocessing_config $tao_triton_root/tao_triton/python/clustering_specs/clustering_config_centerpose.prototxt
+```
+
+The infered images and the related json files are generated in the `/path/to/the/output/directory/`
+
+ 13. For running FoundationPose model, the command line would be as follows:
+
+- Note that please make sure the camera calibration infomation is correct before running the command.
+- Please provide the first frame object 2d bounding box as the initialization of the FoundationPose.
+- Please make sure the file names are able to sort because the FoundationPose comes with the tracking function.
+- Please confirm the sub-folders, which are containing the RGB image and the related depth image. The image depth is in meter unit.
+- The OBJ file requires the texture image in the same folder. 
+
+```sh
+python tao_triton/python/entrypoints/tao_client.py \
+        /path/to/a/testing/directory/ \
+        -m foundationpose_refiner_tao,foundationpose_scorer_tao \
+        -x 1 \
+        -b 1 \
+        --mode Foundationpose \
+        -i https -u localhost:8000 \
+        --async \
+        --output_path /path/to/the/output/directory \
+        --img_dirs rgb \
+        --img_dirs depth \
+        --obj_file /path/to/the/CAD/file.obj \
+        --intrinsic_file /path/to/intrinsic/matrix.txt \
+        --bbox 354,374,729,871
 ```
 
 The infered images and the related json files are generated in the `/path/to/the/output/directory/`

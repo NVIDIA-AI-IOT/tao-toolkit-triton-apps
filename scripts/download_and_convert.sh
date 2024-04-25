@@ -123,4 +123,19 @@ trtexec --onnx=/tao_models/centerpose_model/bottle_FAN_small.onnx \
         --optShapes="input":8x3x512x512 \
         --saveEngine=/model_repository/centerpose_tao/1/model.plan
 
+# Generate a FoundationPose model, which includes two sub-models
+echo "Converting the FoundationPose refine model"
+mkdir -p /model_repository/foundationpose_refiner_tao/1
+trtexec --onnx=/tao_models/foundationpose_refiner_model/refiner_net.onnx \
+        --minShapes=inputA:1x6x160x160,inputB:1x6x160x160  \
+        --optShapes=inputA:252x6x160x160,inputB:252x6x160x160 \
+        --maxShapes=inputA:252x6x160x160,inputB:252x6x160x160 \
+        --saveEngine=/model_repository/foundationpose_refiner_tao/1/model.plan \
+        --preview=+fasterDynamicShapes0805
+
+echo "Converting the FoundationPose score model"
+mkdir -p /model_repository/foundationpose_scorer_tao/1
+trtexec --onnx=/tao_models/foundationpose_scorer_model/score_net.onnx \
+        --saveEngine=/model_repository/foundationpose_scorer_tao/1/model.plan
+
 /opt/tritonserver/bin/tritonserver --model-store /model_repository
