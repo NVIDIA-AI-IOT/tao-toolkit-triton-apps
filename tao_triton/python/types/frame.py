@@ -318,3 +318,33 @@ class Frame(object):
                     inference_input[:, idx, :, :] /= std[idx]
 
         return inference_input
+
+    def _load_img_foundationpose(self, depth_folder, depth_ext='.png'):
+        """load an image and returns the original image and a numpy array for model to consume.
+
+        Args:
+            img_path (str): path to an image
+        Returns:
+            img (PIL.Image): PIL image of original image.
+            ratio (float): resize ratio of original image over processed image
+            inference_input (array): numpy array for processed image
+        """
+        file_name = os.path.split(os.path.splitext(self._image_path)[0])[1]
+        depth_path = os.path.join(depth_folder, file_name + depth_ext)
+
+        if not os.path.exists(depth_path):
+            raise NotImplementedError(f"Expecting the correct path of the depth file: {depth_path}")
+
+        img = np.array(Image.open(self._image_path))
+        H, W, C = img.shape
+
+        depth = Image.open(depth_path).resize((W, H))
+
+        depth = np.array(depth) / 1e3
+        depth[(depth < 0.1) | (depth >= np.inf)] = 0
+
+        assert len(depth) != 2, (
+            "2 dimensions are required for the depth map. Got {}".format(len(depth))
+        )
+
+        return img, depth 

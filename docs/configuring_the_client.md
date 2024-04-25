@@ -33,6 +33,8 @@
 - [CenterPose](#centerpose)
   - [Configuring the CenterPose model entry in the model repository](#configuring-the-centerpose-model-entry-in-the-model-repository)
   - [Configuring the Post-processor](#configuring-the-centerpose-model-post-processor)
+- [FoundationPose](#foundationpose)
+  - [Configuring the FoundationPose model entry in the model repository](#configuring-the-foundationpose-model-entry-in-the-model-repository)
 
 The inference client samples provided in this provide several parameters that the user can configure.
 This section elaborates about those parameters in more detail.
@@ -1085,3 +1087,136 @@ The following table explains the configurable elements of the postprocessor plug
 > Please configure the appropriate visualization settings by adjusting `axis_size`, `square_size`, `line_weight`, and `scale_text`. A large testing image may require a larger scale value for optimal visualization.  
 
 The post processor configuration in a protobuf file, who's schema is defined in this [file](../python/proto/postprocessor_config.proto).
+
+## FoundationPose
+
+1. [Model Repository](#configuring-the-foundationpose-model-entry-in-the-model-repository)
+
+### Configuring the FoundationPose model entry in the model repository
+
+The model repository is the location on the Triton Server, where the model served from. Triton expects the models
+in the model repository to be follow the layout defined [here](https://github.com/triton-inference-server/server/blob/main/docs/model_repository.md#repository-layout).
+
+A sample model repository for an FoundationPose model would have the following contents.
+
+```text
+model_repository_root/
+    foundationpose_refiner_tao/
+        config.pbtxt
+        1/
+            model.plan
+    foundationpose_scorer_tao/
+        config.pbtxt
+        1/
+            model.plan
+```
+
+A sample testing folder for the FoundationPose model inference would have the following contents.
+
+```
+foundationposeinference (root)
+├── demo_data
+│   ├── depth
+│   │   ├── *.png
+│   ├── rgb
+│   │   ├── *.jpg
+│   ├── cam_K.txt
+│   ├── obj_file
+│   │   ├── *.obj
+|   |   ├── texture*.png
+...
+└── ...
+ ```
+
+
+The `config.pbtxt` files, describe the model configuration for the models. The refiner model configuration file for the FoundationPose model would look like this.
+
+```proto
+name: "foundationpose_refiner_tao"
+platform: "tensorrt_plan"
+max_batch_size: 252
+
+input [
+  {
+    name: "inputA"
+    data_type: TYPE_FP32
+    format: FORMAT_NCHW
+    dims: [ 6, 160, 160 ]
+  },
+  {
+    name: "inputB"
+    data_type: TYPE_FP32
+    format: FORMAT_NCHW
+    dims: [ 6, 160, 160 ]
+  }
+]
+output [
+  {
+    name: "trans"
+    data_type: TYPE_FP32
+    dims: [ 3 ]
+  },
+  {
+    name: "rot"
+    data_type: TYPE_FP32
+    dims: [ 3 ]
+  }
+]
+dynamic_batching { }
+```
+
+The following table explains the parameters in the config.pbtxt
+
+| **Parameter Name** | **Description** | **Type**  | **Supported Values**| **Sample Values**|
+| :----              | :-------------- | :-------: | :------------------ | :--------------- |
+| name | The user readable name of the served model | string |   | foundationpose_refiner_tao|
+| platform | The backend used to parse and run the model | string | tensorrt_plan | tensorrt_plan |
+| max_batch_size | The maximum batch size used to create the TensorRT engine.<br>This should be the same as the `max_batch_size` parameter of the `onnx` exported| int | 1, 252 | 252 |
+| input | Configuration elements for the input nodes | list of protos/node |  |  |
+| output | Configuration elements for the output nodes | list of protos/node |  |  |
+| dynamic_batching | Configuration element to enable [dynamic batching](https://github.com/triton-inference-server/server/blob/main/docs/model_configuration.md#dynamic-batcher) using Triton | proto element |  |  |
+
+The input and output elements in the config.pbtxt provide the configurable parameters for the input and output nodes of the model that is being served. As seen in the sample, a FoundationPose refiner model has 2 input nodes `inputA` and `inputB`, and 2 output nodes `trans` and `rot`.
+
+The scorer model configuration file for the FoundationPose model would look like this.
+
+```proto
+name: "foundationpose_scorer_tao"
+platform: "tensorrt_plan"
+max_batch_size: 252
+
+input [
+  {
+    name: "inputA"
+    data_type: TYPE_FP32
+    format: FORMAT_NCHW
+    dims: [ 6, 160, 160 ]
+  },
+  {
+    name: "inputB"
+    data_type: TYPE_FP32
+    format: FORMAT_NCHW
+    dims: [ 6, 160, 160 ]
+  }
+]
+output [
+  {
+    name: "score_logit"
+    data_type: TYPE_FP32
+    dims: [ 1 ]
+  }
+]
+```
+
+The following table explains the parameters in the config.pbtxt
+
+| **Parameter Name** | **Description** | **Type**  | **Supported Values**| **Sample Values**|
+| :----              | :-------------- | :-------: | :------------------ | :--------------- |
+| name | The user readable name of the served model | string |   | foundationpose_scorer_tao|
+| platform | The backend used to parse and run the model | string | tensorrt_plan | tensorrt_plan |
+| max_batch_size | The maximum batch size used to create the TensorRT engine.<br>This should be the same as the `max_batch_size` parameter of the `onnx` exported| int | 252 | 252 |
+| input | Configuration elements for the input nodes | list of protos/node |  |  |
+| output | Configuration elements for the output nodes | list of protos/node |  |  |
+| dynamic_batching | Configuration element to enable [dynamic batching](https://github.com/triton-inference-server/server/blob/main/docs/model_configuration.md#dynamic-batcher) using Triton | proto element |  |  |
+
+The input and output elements in the config.pbtxt provide the configurable parameters for the input and output nodes of the model that is being served. As seen in the sample, a FoundationPose refiner model has 2 input nodes `inputA` and `inputB`, and 1 output nodes `score_logit`.

@@ -11,6 +11,7 @@ chardet<4,>=3.0.2
 decorator==5.0.7
 defusedxml==0.7.1
 entrypoints==0.3
+fvcore==0.1.5.post20221221
 gevent==21.1.2
 geventhttpclient==1.4.4
 greenlet==1.0.0
@@ -31,17 +32,20 @@ jupyter-console==6.4.0
 jupyter-core==4.7.1
 jupyterlab-pygments==0.1.2
 jupyterlab-widgets==1.0.0
+kornia==0.7.2
 lazy-object-proxy==1.6.0
 MarkupSafe==1.1.1
 matplotlib==3.5.1
 mccabe==0.6.1
 mistune==0.8.4
+ninja==1.11.1.1
 nbclient==0.5.3
 nbconvert==6.0.7
 nbformat==5.1.3
 nest-asyncio==1.5.1
 notebook==6.4.1
 numpy==1.19.5
+open3d==0.15.2
 opencv-python==4.5.5.64
 packaging==20.9
 pandocfilters==1.4.3
@@ -79,8 +83,11 @@ torchvision==0.11.3
 tornado==6.1
 tqdm==4.60.0
 traitlets==4.3.3
+transformations==2022.9.26
+trimesh==4.0.4
 typed-ast==1.4.3
-typing-extensions==3.7.4.3
+typing-extensions==4.10.0
+warp-lang==0.10.1
 wcwidth==0.2.5
 webencodings==0.5.1
 widgetsnbextension==3.5.1
@@ -88,3 +95,5 @@ wrapt==1.12.1
 zipp==3.4.1
 zope.event==4.5.0
 zope.interface==5.4.0
+git+https://github.com/NVlabs/nvdiffrast.git
+git+https://github.com/facebookresearch/pytorch3d.git@stable

@@ -1,0 +1,31 @@
+name: "foundationpose_refiner_tao"
+platform: "tensorrt_plan"
+max_batch_size: 252
+
+input [
+  {
+    name: "inputA"
+    data_type: TYPE_FP32
+    format: FORMAT_NCHW
+    dims: [ 6, 160, 160 ]
+  },
+  {
+    name: "inputB"
+    data_type: TYPE_FP32
+    format: FORMAT_NCHW
+    dims: [ 6, 160, 160 ]
+  }
+]
+output [
+  {
+    name: "trans"
+    data_type: TYPE_FP32
+    dims: [ 3 ]
+  },
+  {
+    name: "rot"
+    data_type: TYPE_FP32
+    dims: [ 3 ]
+  }
+]
+dynamic_batching { }
