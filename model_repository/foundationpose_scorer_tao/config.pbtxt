@@ -23,3 +23,4 @@ output [
     dims: [ 1 ]
   }
 ]
+dynamic_batching { }
