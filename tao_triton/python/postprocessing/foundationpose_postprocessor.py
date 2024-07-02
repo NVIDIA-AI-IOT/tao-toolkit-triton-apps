@@ -14,6 +14,7 @@
 
 """Utility functions to be used for FoundationPose."""
 
+import os
 import torch
 import trimesh
 import kornia
@@ -234,7 +235,14 @@ def compute_tf_batch(left, right, top, bottom, out_size):
     return tf
 
 
-def compute_crop_window_tf_batch(pts=None, H=None, W=None, poses=None, K=None, crop_ratio=1.2, out_size=None, rgb=None, uvs=None, method='min_box', mesh_diameter=None):
+def compute_crop_window_tf_batch(pts=None, 
+                                 poses=None, 
+                                 K=None, 
+                                 crop_ratio=1.2, 
+                                 out_size=None, 
+                                 uvs=None, 
+                                 method='min_box', 
+                                 mesh_diameter=None):
     '''Project the points and find the cropping transform
     @pts: (N,3)
     @poses: (B,4,4) tensor
@@ -349,7 +357,24 @@ def to_homo_torch(pts):
     return homo
 
 
-def nvdiffrast_render(K=None, H=None, W=None, ob_in_cams=None, glctx=None, context='cuda', get_normal=False, mesh_tensors=None, projection_mat=None, bbox2d=None, output_size=None, use_light=False, light_color=None, light_dir=np.array([0,0,1]), light_pos=np.array([0,0,0]), w_ambient=0.8, w_diffuse=0.5, extra={}):
+def nvdiffrast_render(K=None, 
+                      H=None, 
+                      W=None, 
+                      ob_in_cams=None, 
+                      glctx=None, 
+                      context='cuda', 
+                      get_normal=False, 
+                      mesh_tensors=None, 
+                      projection_mat=None, 
+                      bbox2d=None, 
+                      output_size=None, 
+                      use_light=False, 
+                      light_color=None, 
+                      light_dir=np.array([0,0,1]), 
+                      light_pos=np.array([0,0,0]), 
+                      w_ambient=0.8, 
+                      w_diffuse=0.5, 
+                      extra={}):
     '''Just plain rendering, not support any gradient
     @K: (3,3) np array
     @ob_in_cams: (N,4,4) torch tensor, openCV camera
@@ -441,11 +466,22 @@ def nvdiffrast_render(K=None, H=None, W=None, ob_in_cams=None, glctx=None, conte
     return color, depth, normal_map
 
 
-def make_crop_data_batch(render_size, ob_in_cams, mesh, rgb, depth, K, crop_ratio, xyz_map, normal_map=None, mesh_diameter=None, mesh_tensors=None, device='cuda'):
+def make_crop_data_batch(render_size, 
+                         ob_in_cams, 
+                         mesh, 
+                         rgb, 
+                         depth, 
+                         K, 
+                         crop_ratio, 
+                         xyz_map, 
+                         normal_map=None, 
+                         mesh_diameter=None, 
+                         mesh_tensors=None, 
+                         device='cuda'):
     """Cropping data from the image by batch"""
     H, W = depth.shape[:2]
     method = 'box_3d'
-    tf_to_crops = compute_crop_window_tf_batch(pts=mesh.vertices, H=H, W=W, poses=ob_in_cams, K=K, crop_ratio=crop_ratio, out_size=(render_size[1], render_size[0]), method=method, mesh_diameter=mesh_diameter)
+    tf_to_crops = compute_crop_window_tf_batch(pts=mesh.vertices, poses=ob_in_cams, K=K, crop_ratio=crop_ratio, out_size=(render_size[1], render_size[0]), method=method, mesh_diameter=mesh_diameter)
 
     B = len(ob_in_cams)
     poseA = torch.as_tensor(ob_in_cams, dtype=torch.float, device=device)
@@ -472,8 +508,8 @@ def make_crop_data_batch(render_size, ob_in_cams, mesh, rgb, depth, K, crop_rati
         xyz_map_rs.append(extra['xyz_map'])
     
     rgb_rs = torch.cat(rgb_rs, dim=0).permute(0, 3, 1, 2) * 255
-    depth_rs = torch.cat(depth_rs, dim=0).permute(0, 3, 1, 2)  #(B,1,H,W)
-    xyz_map_rs = torch.cat(xyz_map_rs, dim=0).permute(0, 3, 1, 2)  #(B,3,H,W)
+    depth_rs = torch.cat(depth_rs, dim=0).permute(0, 3, 1, 2)
+    xyz_map_rs = torch.cat(xyz_map_rs, dim=0).permute(0, 3, 1, 2)
     Ks = torch.as_tensor(K, device=device, dtype=torch.float).reshape(1, 3, 3)
 
     rgbBs = kornia.geometry.transform.warp_perspective(torch.as_tensor(rgb, dtype=torch.float, device=device).permute(2,0,1)[None].expand(B,-1,-1,-1), tf_to_crops, dsize=render_size, mode='bilinear', align_corners=False)
@@ -521,7 +557,27 @@ class PoseData:
     poseA: np.ndarray = None   #(4,4)
     target: float = None
 
-    def __init__(self, rgbA=None, rgbB=None, depthA=None, depthB=None, maskA=None, maskB=None, normalA=None, normalB=None, xyz_mapA=None, xyz_mapB=None, poseA=None, poseB=None, K=None, target=None, mesh_diameter=None, tf_to_crop=None, crop_mask=None, model_pts=None, label=None, model_scale=None):
+    def __init__(self,
+                 rgbA=None,
+                 rgbB=None,
+                 depthA=None,
+                 depthB=None,
+                 maskA=None,
+                 maskB=None,
+                 normalA=None,
+                 normalB=None,
+                 xyz_mapA=None,
+                 xyz_mapB=None,
+                 poseA=None,
+                 poseB=None,
+                 K=None,
+                 target=None,
+                 mesh_diameter=None,
+                 tf_to_crop=None,
+                 crop_mask=None,
+                 model_pts=None,
+                 label=None,
+                 model_scale=None):
         self.rgbA = rgbA
         self.rgbB = rgbB
         self.depthA = depthA
@@ -564,11 +620,30 @@ class BatchPoseData:
     depthBs = None
     normalAs = None
     normalBs = None
-    poseA = None  #(B,4,4)
+    poseA = None
     poseB = None
-    targets = None  # Score targets, torch tensor (B)
+    targets = None
 
-    def __init__(self, rgbAs=None, rgbBs=None, depthAs=None, depthBs=None, normalAs=None, normalBs=None, maskAs=None, maskBs=None, poseA=None, poseB=None, xyz_mapAs=None, xyz_mapBs=None, tf_to_crops=None, Ks=None, crop_masks=None, model_pts=None, mesh_diameters=None, labels=None):
+    def __init__(self, 
+                 rgbAs=None, 
+                 rgbBs=None, 
+                 depthAs=None, 
+                 depthBs=None, 
+                 normalAs=None, 
+                 normalBs=None, 
+                 maskAs=None, 
+                 maskBs=None, 
+                 poseA=None, 
+                 poseB=None, 
+                 xyz_mapAs=None, 
+                 xyz_mapBs=None, 
+                 tf_to_crops=None, 
+                 Ks=None, 
+                 crop_masks=None, 
+                 model_pts=None, 
+                 mesh_diameters=None, 
+                 labels=None
+                 ):
         self.rgbAs = rgbAs
         self.rgbBs = rgbBs
         self.depthAs = depthAs
@@ -648,7 +723,7 @@ def transform_depth_to_xyzmap(batch:BatchPoseData, H_ori, W_ori, mini_batch=32):
     if batch.xyz_mapAs is None:
         batch_depthAs = batch.depthAs.cuda().expand(bs,-1,-1,-1)
         batch.xyz_mapAs = torch.zeros((bs, 3, H, W))
-        
+
         for idx in range(0, bs, mini_batch):
             depthAs_ori = kornia.geometry.transform.warp_perspective(batch_depthAs[idx:idx + mini_batch, :, :, :], crop_to_oris[idx:idx + mini_batch, :, :], dsize=(H_ori, W_ori), mode='nearest', align_corners=False)
             xyz_mapAs = depth2xyzmap_batch(depthAs_ori[:,0], batch.Ks[idx:idx + mini_batch, :, :], zfar=np.inf).permute(0,3,1,2)
@@ -805,7 +880,14 @@ def make_crop_data_batch_score(render_size, ob_in_cams, mesh, rgb, depth, K, cro
     H, W = depth.shape[:2]
 
     method = 'box_3d'
-    tf_to_crops = compute_crop_window_tf_batch(pts=mesh.vertices, H=H, W=W, poses=ob_in_cams, K=K, crop_ratio=crop_ratio, out_size=(render_size[1], render_size[0]), method=method, mesh_diameter=mesh_diameter)
+    tf_to_crops = compute_crop_window_tf_batch(pts=mesh.vertices,
+                                               poses=ob_in_cams,
+                                               K=K,
+                                               crop_ratio=crop_ratio,
+                                               out_size=(render_size[1], render_size[0]),
+                                               method=method,
+                                               mesh_diameter=mesh_diameter
+                                               )
 
     B = len(ob_in_cams)
     poseAs = torch.as_tensor(ob_in_cams, dtype=torch.float, device='cuda')
@@ -817,7 +899,17 @@ def make_crop_data_batch_score(render_size, ob_in_cams, mesh, rgb, depth, K, cro
     bbox2d_ori = transform_pts(bbox2d_crop, tf_to_crops.inverse()[:, None]).reshape(-1, 4)
 
     extra = {}
-    rgb_r, depth_r, normal_r = nvdiffrast_render(K=K, H=H, W=W, ob_in_cams=poseAs, context='cuda', get_normal=False, mesh_tensors=mesh_tensors, output_size=(160,160), bbox2d=bbox2d_ori, use_light=True, extra=extra)
+    rgb_r, depth_r, normal_r = nvdiffrast_render(K=K, 
+                                                 H=H, 
+                                                 W=W, 
+                                                 ob_in_cams=poseAs, 
+                                                 context='cuda', 
+                                                 get_normal=False, 
+                                                 mesh_tensors=mesh_tensors, 
+                                                 output_size=(160,160), 
+                                                 bbox2d=bbox2d_ori, 
+                                                 use_light=True, 
+                                                 extra=extra)
     rgb_rs.append(rgb_r)
     depth_rs.append(depth_r[..., None])
 
@@ -859,4 +951,7 @@ class FoundationposePostprocessor(Postprocessor):
 
     def apply(self, output_tensors, this_id, render=True):
         """Apply the post processor to the outputs to the centerpose outputs."""
-        cv2.imwrite(f'{self.output_path}/{this_id}.jpg', output_tensors[:, :, ::-1])
+        if not os.path.exists(self.output_path):
+            os.makedirs(self.output_path, exist_ok=True)
+        
+        cv2.imwrite(f'{self.output_path}/{this_id}.jpg', output_tensors)

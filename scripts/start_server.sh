@@ -91,9 +91,7 @@ mv ${default_model_download_path}/visual_changenet_segmentation_levircd_v${visua
 wget --content-disposition ${ngc_centerpose} -O ${default_model_download_path}/centerpose_ros_deployable_bottle_dla34_v1.0.zip && \
      unzip ${default_model_download_path}/centerpose_ros_deployable_bottle_dla34_v1.0.zip -d ${default_model_download_path}/centerpose_model/
 rm -rf ${default_model_download_path}/*.zip
-# wget --content-disposition ${ngc_foundationpose} -O ${default_model_download_path}/foundationpose_deployable.zip && \
-#      unzip ${default_model_download_path}/foundationpose_deployable.0.zip -d ${default_model_download_path}/foundationpose_model/
-# rm -rf ${default_model_download_path}/*.zip
+ngc registry model download-version ${ngc_foundationpose} --dest ${default_model_download_path}
 
 # Run the server container.
 echo "Running the server on ${gpu_id}"

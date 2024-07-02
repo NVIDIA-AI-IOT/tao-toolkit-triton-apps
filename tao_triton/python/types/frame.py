@@ -20,6 +20,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import os
+import cv2
 from PIL import Image
 import numpy as np
 
@@ -335,12 +336,13 @@ class Frame(object):
         if not os.path.exists(depth_path):
             raise NotImplementedError(f"Expecting the correct path of the depth file: {depth_path}")
 
-        img = np.array(Image.open(self._image_path))
+        img = cv2.imread(self._image_path)[...,:3]
+
         H, W, C = img.shape
 
-        depth = Image.open(depth_path).resize((W, H))
+        depth = cv2.imread(self._image_path.replace('rgb','depth'),-1) / 1e3
+        depth = cv2.resize(depth, (W, H), interpolation=cv2.INTER_NEAREST)
 
-        depth = np.array(depth) / 1e3
         depth[(depth < 0.1) | (depth >= np.inf)] = 0
 
         assert len(depth) != 2, (

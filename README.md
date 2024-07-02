@@ -519,21 +519,24 @@ The infered images and the related json files are generated in the `/path/to/the
 - Please confirm the sub-folders, which are containing the RGB image and the related depth image. The image depth is in meter unit.
 - The OBJ file requires the texture image in the same folder. 
 
+Demo Data for the inference pipeline:
+- Please download the demo data from this [link](https://drive.google.com/drive/folders/1pRyFmxYXmAnpku7nGRioZaKrVJtIsroP) (the inference data is from the official Github repo).
+- The following example is based on `mustard0.zip` data.
+- The final results could be found in `mustard0/track_vis/` folder.
+
 ```sh
 python tao_triton/python/entrypoints/tao_client.py \
-        /path/to/a/testing/directory/ \
+        mustard0/ \
         -m foundationpose_refiner_tao,foundationpose_scorer_tao \
         -x 1 \
         -b 1 \
         --mode Foundationpose \
         -i https -u localhost:8000 \
         --async \
-        --output_path /path/to/the/output/directory \
+        --output_path mustard0/track_vis/ \
         --img_dirs rgb \
         --img_dirs depth \
-        --obj_file /path/to/the/CAD/file.obj \
-        --intrinsic_file /path/to/intrinsic/matrix.txt \
-        --bbox 354,374,729,871
+        --obj_file mustard0/mesh/textured_simple.obj \
+        --intrinsic_file mustard0/cam_K.txt \
+        --bbox 100,264,173,345
 ```
-
-The infered images and the related json files are generated in the `/path/to/the/output/directory/`
