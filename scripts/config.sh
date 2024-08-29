@@ -64,6 +64,6 @@ ngc_pose_classification="https://api.ngc.nvidia.com/v2/models/nvidia/tao/posecla
 ngc_re_identification="https://drive.google.com/uc?export=download&id=1jicWzrPgEgvHLoxS57XLwk3o2xRbXeN_"
 ngc_visual_changenet="nvidia/tao/visual_changenet_segmentation_levircd:${visual_changenet_version}"
 ngc_centerpose="https://api.ngc.nvidia.com/v2/models/nvidia/tao/centerpose_ros/versions/${centerpose_version}/zip"
-ngc_foundationpose="nvstaging/tao/foundation_pose:${foundationpose_version}"
+ngc_foundationpose="nvidia/tao/foundationpose:${foundationpose_version}"
 
 default_model_download_path="${tao_triton_root}/tao_models"
